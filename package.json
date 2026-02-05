@@ -1,0 +1,28 @@
+{
+	"name": "obsidian-magic-folders",
+	"version": "1.0.0",
+	"description": "Create virtual smart folders that dynamically display files based on tags, links, or custom filters.",
+	"main": "main.js",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "node esbuild.config.mjs production"
+	},
+	"keywords": [
+		"obsidian",
+		"plugin",
+		"folders",
+		"virtual",
+		"tags",
+		"smart"
+	],
+	"author": "Infinition",
+	"license": "MIT",
+		"devDependencies": {
+		"tslib": "^2.6.2",
+		"@types/node": "^20.11.0",
+		"builtin-modules": "^4.0.0",
+		"esbuild": "^0.27.2",
+		"obsidian": "^1.11.0",
+		"typescript": "^5.9.3"
+	}
+}

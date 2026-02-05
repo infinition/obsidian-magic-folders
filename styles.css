@@ -1,0 +1,419 @@
+/* Magic Folders - Obsidian Plugin Styles */
+
+/* ============================================
+   CREATE BUTTON
+   ============================================ */
+
+.magic-folder-create-btn {
+	color: var(--text-muted);
+	transition: all 0.2s ease;
+}
+
+.magic-folder-create-btn:hover {
+	color: var(--interactive-accent);
+	transform: scale(1.1);
+}
+
+/* ============================================
+   MAGIC FOLDER ITEM
+   ============================================ */
+
+.magic-folder-item {
+	position: relative;
+	margin-bottom: 2px;
+}
+
+.magic-folder-item .nav-folder-title {
+	border-left: 3px solid var(--magic-folder-color, var(--interactive-accent));
+	padding-left: 6px !important;
+	background: linear-gradient(90deg, 
+		color-mix(in srgb, var(--magic-folder-color, var(--interactive-accent)) 12%, transparent) 0%,
+		transparent 100%
+	);
+	border-radius: 0 4px 4px 0;
+	transition: all 0.15s ease;
+}
+
+.magic-folder-item .nav-folder-title:hover {
+	background: linear-gradient(90deg, 
+		color-mix(in srgb, var(--magic-folder-color, var(--interactive-accent)) 22%, transparent) 0%,
+		transparent 100%
+	);
+}
+
+.magic-folder-item .magic-folder-icon {
+	color: var(--magic-folder-color, var(--interactive-accent));
+	margin-right: 4px;
+	display: inline-flex;
+	align-items: center;
+	opacity: 0.9;
+}
+
+.magic-folder-item .magic-folder-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.magic-folder-item .nav-folder-title-content {
+	color: var(--magic-folder-color, var(--interactive-accent)) !important;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+}
+
+.magic-folder-item .magic-file-count {
+	font-size: 10px;
+	color: var(--text-muted);
+	margin-left: 8px;
+	background: var(--background-modifier-hover);
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-weight: 500;
+}
+
+/* ============================================
+   FILES IN MAGIC FOLDER
+   ============================================ */
+
+.magic-folder-item .nav-file-title {
+	opacity: 0.85;
+	transition: all 0.1s ease;
+	border-radius: 4px;
+	margin-left: 4px;
+}
+
+.magic-folder-item .nav-file-title:hover {
+	opacity: 1;
+	background-color: var(--background-modifier-hover);
+}
+
+.magic-folder-item .nav-file-tag {
+	font-size: 9px;
+	color: var(--text-faint);
+	margin-left: 4px;
+	opacity: 0.7;
+}
+
+/* ============================================
+   MODAL STYLES
+   ============================================ */
+
+.magic-folder-modal {
+	padding: 20px;
+	max-width: 550px;
+}
+
+.magic-folder-modal h2 {
+	margin-bottom: 20px;
+	color: var(--text-normal);
+}
+
+.magic-folder-modal h3 {
+	margin-top: 20px;
+	margin-bottom: 10px;
+	font-size: 14px;
+}
+
+.magic-folder-modal .setting-item {
+	border-top: none;
+	padding: 14px 0;
+}
+
+/* Color Picker */
+.magic-folder-modal .color-picker-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.magic-folder-modal .color-swatch {
+	width: 28px;
+	height: 28px;
+	border-radius: 6px;
+	cursor: pointer;
+	border: 3px solid transparent;
+	transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.magic-folder-modal .color-swatch:hover {
+	transform: scale(1.15);
+	box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.magic-folder-modal .color-swatch.selected {
+	border-color: var(--text-normal);
+	box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px currentColor;
+}
+
+/* Icon Picker */
+.magic-folder-modal .icon-picker-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 10px;
+	max-height: 150px;
+	overflow-y: auto;
+	padding: 4px;
+}
+
+.magic-folder-modal .icon-option {
+	width: 36px;
+	height: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px;
+	cursor: pointer;
+	background: var(--background-modifier-hover);
+	transition: all 0.15s ease;
+	color: var(--text-muted);
+}
+
+.magic-folder-modal .icon-option:hover {
+	background: var(--background-modifier-active-hover);
+	transform: scale(1.1);
+	color: var(--text-normal);
+}
+
+.magic-folder-modal .icon-option.selected {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Filters */
+.magic-folder-modal .filters-container {
+	margin-top: 16px;
+	padding: 14px;
+	background: var(--background-secondary);
+	border-radius: 10px;
+	min-height: 50px;
+}
+
+.magic-folder-modal .filter-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--background-modifier-hover);
+	padding: 5px 10px;
+	border-radius: 16px;
+	margin: 4px;
+	font-size: 12px;
+	border: 1px solid var(--background-modifier-border);
+	transition: all 0.1s ease;
+}
+
+.magic-folder-modal .filter-tag:hover {
+	background: var(--background-modifier-active-hover);
+}
+
+.magic-folder-modal .filter-tag svg {
+	width: 12px;
+	height: 12px;
+	opacity: 0.7;
+}
+
+.magic-folder-modal .filter-tag .remove-filter {
+	cursor: pointer;
+	opacity: 0.5;
+	font-size: 16px;
+	line-height: 1;
+	padding: 0 2px;
+	transition: opacity 0.1s ease;
+}
+
+.magic-folder-modal .filter-tag .remove-filter:hover {
+	opacity: 1;
+	color: var(--text-error);
+}
+
+/* Filter Input */
+.magic-folder-modal .filter-input-container {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.magic-folder-modal .filter-input-container input {
+	flex: 1;
+	padding: 8px 12px;
+	border-radius: 6px;
+}
+
+.magic-folder-modal .filter-input-container button {
+	padding: 8px 16px;
+}
+
+/* Quick Add Buttons */
+.magic-folder-modal button {
+	font-size: 12px;
+	padding: 4px 10px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+/* Preview */
+.magic-folder-modal .preview-container {
+	max-height: 200px;
+	overflow-y: auto;
+	background: var(--background-secondary);
+	padding: 12px;
+	border-radius: 8px;
+	margin-top: 8px;
+}
+
+/* Modal Buttons */
+.magic-folder-modal .modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 24px;
+	padding-top: 16px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes magicPulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
+}
+
+.magic-folder-item.is-updating {
+	animation: magicPulse 1s ease-in-out infinite;
+}
+
+/* ============================================
+   DARK/LIGHT MODE ADJUSTMENTS
+   ============================================ */
+
+.theme-dark .magic-folder-item .nav-folder-title {
+	background: linear-gradient(90deg, 
+		color-mix(in srgb, var(--magic-folder-color, var(--interactive-accent)) 15%, transparent) 0%,
+		transparent 100%
+	);
+}
+
+.theme-light .magic-folder-item .nav-folder-title {
+	background: linear-gradient(90deg, 
+		color-mix(in srgb, var(--magic-folder-color, var(--interactive-accent)) 10%, transparent) 0%,
+		transparent 100%
+	);
+}
+
+/* ============================================
+   DRAG & DROP
+   ============================================ */
+
+.magic-folder-item.is-being-dragged {
+	opacity: 0.5;
+	background: var(--background-modifier-hover);
+	border-radius: 6px;
+}
+
+.magic-folder-item.is-being-dragged .nav-folder-title {
+	pointer-events: none;
+}
+
+.magic-drop-target {
+	background: linear-gradient(90deg, 
+		color-mix(in srgb, var(--interactive-accent) 30%, transparent) 0%,
+		color-mix(in srgb, var(--interactive-accent) 10%, transparent) 100%
+	) !important;
+	border-radius: 6px;
+	outline: 2px dashed var(--interactive-accent);
+	outline-offset: -2px;
+}
+
+.nav-folder-title.magic-drop-target::after {
+	content: '↓ Drop here';
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 10px;
+	color: var(--interactive-accent);
+	font-weight: 600;
+	opacity: 0.8;
+}
+
+/* Root container drop zone */
+.nav-folder-children.magic-drop-target {
+	min-height: 50px;
+	border: 2px dashed var(--interactive-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 5%, transparent);
+}
+
+/* ============================================
+   SUGGESTIONS DROPDOWN
+   ============================================ */
+
+.magic-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	max-height: 200px;
+	overflow-y: auto;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	z-index: 1000;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.magic-suggestion-item {
+	padding: 8px 12px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	transition: background 0.1s ease;
+}
+
+.magic-suggestion-item:last-child {
+	border-bottom: none;
+}
+
+.magic-suggestion-item:hover,
+.magic-suggestion-item.is-selected {
+	background: var(--background-modifier-hover);
+}
+
+.magic-suggestion-item svg {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+}
+
+.filter-input-wrapper {
+	position: relative;
+	margin-bottom: 16px;
+}
+
+.magic-file-tags-tooltip {
+	position: absolute;
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	border-radius: 6px;
+	padding: 6px 10px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+	font-size: 13px;
+	font-weight: 500;
+	pointer-events: none;
+	z-index: 99999 !important;
+}
+
+.magic-file-tags-tooltip .tag-pill {
+	background: var(--background-modifier-active-hover);
+	color: var(--text-accent);
+	border-radius: 4px;
+	padding: 2px 6px;
+	margin: 0 2px;
+	font-size: 12px;
+	font-weight: 600;
+	display: inline-block;
+}
