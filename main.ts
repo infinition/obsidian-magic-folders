@@ -764,6 +764,17 @@ export default class MagicFoldersPlugin extends Plugin {
 	customIconResourceCache: Map<string, string> = new Map();
 	customIconLocalStorageKeyPrefix = "magic-folders-icon-cache:";
 	_commandBlocked = false;
+	_revealBlockCount = 0;
+	_magicSelectionKeepTimers: number[] = [];
+	_lastMagicActiveTitleEl: HTMLElement | null = null;
+	_blockedExplorerMethodNames = [
+		"revealInFolder",
+		"expandFolderForFile",
+		"expandParentsForFile",
+		"expandFolderForPath",
+		"expandPath",
+		"revealFile"
+	];
 
 	t(key: string, vars?: Record<string, any>) {
 		const lang = (this.settings && this.settings.language) || 'en';
@@ -799,6 +810,9 @@ export default class MagicFoldersPlugin extends Plugin {
 			this.app.workspace.on("file-open", (file) => {
 				if (!file) return;
 				this.markFileAsRead(file.path);
+				if (this._revealBlockCount > 0 && this._lastMagicActiveTitleEl?.isConnected) {
+					this.setMagicFileActive(this._lastMagicActiveTitleEl);
+				}
 			})
 		);
 		if (this.settings.refreshOnChange) {
@@ -843,6 +857,15 @@ export default class MagicFoldersPlugin extends Plugin {
 		console.log("Unloading Magic Folders plugin");
 		this.removeAllVirtualFolders();
 		this.clearTooltips();
+		for (const timer of this._magicSelectionKeepTimers) {
+			window.clearTimeout(timer);
+		}
+		this._magicSelectionKeepTimers = [];
+		this._lastMagicActiveTitleEl = null;
+		if (this._commandBlocked || this._revealBlockCount > 0) {
+			this._revealBlockCount = 1;
+			this.unblockRevealInFolder(this.getFileExplorer());
+		}
 		if (this.styleEl) this.styleEl.remove();
 		if (this.fileExplorerButton) this.fileExplorerButton.remove();
 		if (this.refreshTimeout) {
@@ -1395,6 +1418,12 @@ export default class MagicFoldersPlugin extends Plugin {
 		}
 		return void 0;
 	}
+	getFileExplorers() {
+		return this.app.workspace
+			.getLeavesOfType("file-explorer")
+			.map((leaf: any) => leaf?.view)
+			.filter((view: any) => !!view);
+	}
 	getFileExplorerContainer(fileExplorer) {
 		var _a, _b, _c, _d;
 		const navContainer = (_a = fileExplorer == null ? void 0 : fileExplorer.dom) == null ? void 0 : _a.navFileContainerEl;
@@ -1407,6 +1436,20 @@ export default class MagicFoldersPlugin extends Plugin {
 	}
 
 	setMagicFileActive(titleEl: HTMLElement) {
+		const explorer = this.getFileExplorer();
+		const container = explorer ? this.getFileExplorerContainer(explorer) : null;
+		if (container) {
+			container.querySelectorAll(".nav-file-title.is-active").forEach((el) => {
+				if (!(el as HTMLElement).closest(".magic-folder-item")) {
+					el.classList.remove("is-active");
+				}
+			});
+			container.querySelectorAll(".nav-file.is-active").forEach((el) => {
+				if (!(el as HTMLElement).closest(".magic-folder-item")) {
+					el.classList.remove("is-active");
+				}
+			});
+		}
 		const magicRoot = titleEl.closest(".magic-folder-item");
 		if (!magicRoot) return;
 		magicRoot.querySelectorAll(".nav-file-title.is-active").forEach((el) => el.classList.remove("is-active"));
@@ -1416,32 +1459,73 @@ export default class MagicFoldersPlugin extends Plugin {
 		if (fileEl) fileEl.classList.add("is-active");
 	}
 
-	suppressExplorerSelection(container: HTMLElement | null, prevActive: HTMLElement | null, prevScrollTop: number | null) {
-		if (!container) return;
-		const start = Date.now();
-		const lockMs = 3000; // Augmenté à 3 secondes pour plus de fiabilité
-		const run = () => {
-			if (prevScrollTop !== null) container.scrollTop = prevScrollTop;
-			container.querySelectorAll(".nav-file-title.is-active").forEach((el) => el.classList.remove("is-active"));
-			if (prevActive && prevActive.isConnected) {
-				prevActive.classList.add("is-active");
+	keepMagicFileActive(titleEl: HTMLElement, durationMs = 4000) {
+		const checkpoints = [0, 50, 120, 250, 500, 900, 1400, 2200, 3200, 4000].filter((ms) => ms <= durationMs);
+		for (const ms of checkpoints) {
+			const timer = window.setTimeout(() => {
+				if (!titleEl.isConnected) return;
+				this.setMagicFileActive(titleEl);
+			}, ms);
+			this._magicSelectionKeepTimers.push(timer);
+		}
+	}
+
+	collectExplorerMethodsToBlock(explorer: any) {
+		const names = new Set<string>(this._blockedExplorerMethodNames);
+		const pattern = /(reveal|expand|ensurevisible|setactive|select|focus|scrollto)/i;
+		let obj = explorer;
+		let depth = 0;
+		while (obj && depth < 4) {
+			for (const methodName of Object.getOwnPropertyNames(obj)) {
+				if (methodName === "constructor") continue;
+				if (names.has(methodName)) continue;
+				if (!pattern.test(methodName)) continue;
+				const descriptor = Object.getOwnPropertyDescriptor(obj, methodName);
+				if (descriptor && typeof descriptor.value === "function") {
+					names.add(methodName);
+				}
 			}
-			if (Date.now() - start < lockMs) {
-				requestAnimationFrame(run);
+			obj = Object.getPrototypeOf(obj);
+			depth++;
+		}
+		return Array.from(names);
+	}
+
+	patchExplorerMethodsForBlock(explorer: any) {
+		if (!explorer) return;
+		const originalMethods = explorer._magicOriginalExplorerMethods ?? {};
+		explorer._magicOriginalExplorerMethods = originalMethods;
+		const methodsToBlock = this.collectExplorerMethodsToBlock(explorer);
+		for (const methodName of methodsToBlock) {
+			const method = explorer[methodName];
+			if (typeof method === "function" && !originalMethods[methodName]) {
+				originalMethods[methodName] = method;
+				explorer[methodName] = () => {
+					return;
+				};
 			}
-		};
-		run();
+		}
+	}
+
+	restoreExplorerMethodsAfterBlock(explorer: any) {
+		if (!explorer) return;
+		const originalMethods = explorer._magicOriginalExplorerMethods;
+		if (!originalMethods) return;
+		for (const methodName of Object.keys(originalMethods)) {
+			explorer[methodName] = originalMethods[methodName];
+		}
+		delete explorer._magicOriginalExplorerMethods;
 	}
 
 	blockRevealInFolder(explorer: any) {
-		if (!explorer) return;
-
-		// Bloquer la méthode revealInFolder
-		if (explorer.revealInFolder && !explorer._originalRevealInFolder) {
-			explorer._originalRevealInFolder = explorer.revealInFolder;
-			explorer.revealInFolder = () => {
-				console.log("Magic Folders: revealInFolder bloqué");
-			};
+		this._revealBlockCount++;
+		if (this._revealBlockCount > 1) return;
+		const explorers = this.getFileExplorers();
+		if (explorer && !explorers.includes(explorer)) {
+			explorers.push(explorer);
+		}
+		for (const explorerView of explorers) {
+			this.patchExplorerMethodsForBlock(explorerView);
 		}
 
 		// Bloquer aussi la commande file-explorer:reveal-active-file
@@ -1462,12 +1546,18 @@ export default class MagicFoldersPlugin extends Plugin {
 	}
 
 	unblockRevealInFolder(explorer: any) {
-		if (!explorer) return;
+		if (this._revealBlockCount > 0) {
+			this._revealBlockCount--;
+		}
+		if (this._revealBlockCount > 0) return;
+		const explorers = this.getFileExplorers();
+		if (explorer && !explorers.includes(explorer)) {
+			explorers.push(explorer);
+		}
 
-		// Restaurer la méthode revealInFolder
-		if (explorer._originalRevealInFolder) {
-			explorer.revealInFolder = explorer._originalRevealInFolder;
-			delete explorer._originalRevealInFolder;
+		// Restaurer les méthodes de reveal/expand
+		for (const explorerView of explorers) {
+			this.restoreExplorerMethodsAfterBlock(explorerView);
 		}
 
 		// Restaurer la commande file-explorer:reveal-active-file
@@ -1942,22 +2032,21 @@ export default class MagicFoldersPlugin extends Plugin {
 			e.stopPropagation();
 			e.stopImmediatePropagation();
 			const explorer = this.getFileExplorer();
-			const container = explorer ? this.getFileExplorerContainer(explorer) : null;
-			const prevActive = container?.querySelector(".nav-file-title.is-active") as HTMLElement | null;
-			const prevScrollTop = container ? container.scrollTop : null;
+			const blockDurationMs = 4000;
+			this._lastMagicActiveTitleEl = titleEl;
 			this.setMagicFileActive(titleEl);
+			this.keepMagicFileActive(titleEl, blockDurationMs);
 
 			// Bloquer temporairement revealInFolder pour empêcher l'ouverture de l'arborescence
 			this.blockRevealInFolder(explorer);
 
 			try {
 				await this.app.workspace.openLinkText(cachedFile.path, "", e.ctrlKey || e.metaKey);
-				// Attendre un peu pour que le fichier soit complètement ouvert
-				await new Promise(resolve => setTimeout(resolve, 100));
-				this.suppressExplorerSelection(container, prevActive, prevScrollTop);
 			} finally {
-				// Débloquer après un délai suffisant
-				setTimeout(() => this.unblockRevealInFolder(explorer), 3000);
+				setTimeout(() => {
+					this.keepMagicFileActive(titleEl, 600);
+					this.unblockRevealInFolder(explorer);
+				}, blockDurationMs);
 			}
 		});
 		this.registerDomEvent(titleEl, "contextmenu", (e) => {
@@ -3033,22 +3122,21 @@ export default class MagicFoldersPlugin extends Plugin {
 			e.stopPropagation();
 			e.stopImmediatePropagation();
 			const explorer = this.getFileExplorer();
-			const container = explorer ? this.getFileExplorerContainer(explorer) : null;
-			const prevActive = container?.querySelector(".nav-file-title.is-active") as HTMLElement | null;
-			const prevScrollTop = container ? container.scrollTop : null;
+			const blockDurationMs = 4000;
+			this._lastMagicActiveTitleEl = titleEl;
 			this.setMagicFileActive(titleEl);
+			this.keepMagicFileActive(titleEl, blockDurationMs);
 
 			// Bloquer temporairement revealInFolder pour empêcher l'ouverture de l'arborescence
 			this.blockRevealInFolder(explorer);
 
 			try {
 				await this.app.workspace.openLinkText(file.path, "", e.ctrlKey || e.metaKey);
-				// Attendre un peu pour que le fichier soit complètement ouvert
-				await new Promise(resolve => setTimeout(resolve, 100));
-				this.suppressExplorerSelection(container, prevActive, prevScrollTop);
 			} finally {
-				// Débloquer après un délai suffisant
-				setTimeout(() => this.unblockRevealInFolder(explorer), 3000);
+				setTimeout(() => {
+					this.keepMagicFileActive(titleEl, 600);
+					this.unblockRevealInFolder(explorer);
+				}, blockDurationMs);
 			}
 		});
 		this.registerDomEvent(titleEl, "contextmenu", (e) => {

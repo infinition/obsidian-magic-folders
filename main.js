@@ -661,6 +661,17 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     this.customIconResourceCache = /* @__PURE__ */ new Map();
     this.customIconLocalStorageKeyPrefix = "magic-folders-icon-cache:";
     this._commandBlocked = false;
+    this._revealBlockCount = 0;
+    this._magicSelectionKeepTimers = [];
+    this._lastMagicActiveTitleEl = null;
+    this._blockedExplorerMethodNames = [
+      "revealInFolder",
+      "expandFolderForFile",
+      "expandParentsForFile",
+      "expandFolderForPath",
+      "expandPath",
+      "revealFile"
+    ];
   }
   t(key, vars) {
     const lang = this.settings && this.settings.language || "en";
@@ -696,8 +707,12 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     );
     this.registerEvent(
       this.app.workspace.on("file-open", (file) => {
+        var _a;
         if (!file) return;
         this.markFileAsRead(file.path);
+        if (this._revealBlockCount > 0 && ((_a = this._lastMagicActiveTitleEl) == null ? void 0 : _a.isConnected)) {
+          this.setMagicFileActive(this._lastMagicActiveTitleEl);
+        }
       })
     );
     if (this.settings.refreshOnChange) {
@@ -742,6 +757,15 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     console.log("Unloading Magic Folders plugin");
     this.removeAllVirtualFolders();
     this.clearTooltips();
+    for (const timer of this._magicSelectionKeepTimers) {
+      window.clearTimeout(timer);
+    }
+    this._magicSelectionKeepTimers = [];
+    this._lastMagicActiveTitleEl = null;
+    if (this._commandBlocked || this._revealBlockCount > 0) {
+      this._revealBlockCount = 1;
+      this.unblockRevealInFolder(this.getFileExplorer());
+    }
     if (this.styleEl) this.styleEl.remove();
     if (this.fileExplorerButton) this.fileExplorerButton.remove();
     if (this.refreshTimeout) {
@@ -1288,6 +1312,9 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     }
     return void 0;
   }
+  getFileExplorers() {
+    return this.app.workspace.getLeavesOfType("file-explorer").map((leaf) => leaf == null ? void 0 : leaf.view).filter((view) => !!view);
+  }
   getFileExplorerContainer(fileExplorer) {
     var _a, _b, _c, _d;
     const navContainer = (_a = fileExplorer == null ? void 0 : fileExplorer.dom) == null ? void 0 : _a.navFileContainerEl;
@@ -1299,6 +1326,20 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     return containerEl.querySelector(".nav-files-container");
   }
   setMagicFileActive(titleEl) {
+    const explorer = this.getFileExplorer();
+    const container = explorer ? this.getFileExplorerContainer(explorer) : null;
+    if (container) {
+      container.querySelectorAll(".nav-file-title.is-active").forEach((el) => {
+        if (!el.closest(".magic-folder-item")) {
+          el.classList.remove("is-active");
+        }
+      });
+      container.querySelectorAll(".nav-file.is-active").forEach((el) => {
+        if (!el.closest(".magic-folder-item")) {
+          el.classList.remove("is-active");
+        }
+      });
+    }
     const magicRoot = titleEl.closest(".magic-folder-item");
     if (!magicRoot) return;
     magicRoot.querySelectorAll(".nav-file-title.is-active").forEach((el) => el.classList.remove("is-active"));
@@ -1307,29 +1348,70 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     const fileEl = titleEl.closest(".nav-file");
     if (fileEl) fileEl.classList.add("is-active");
   }
-  suppressExplorerSelection(container, prevActive, prevScrollTop) {
-    if (!container) return;
-    const start = Date.now();
-    const lockMs = 3e3;
-    const run = () => {
-      if (prevScrollTop !== null) container.scrollTop = prevScrollTop;
-      container.querySelectorAll(".nav-file-title.is-active").forEach((el) => el.classList.remove("is-active"));
-      if (prevActive && prevActive.isConnected) {
-        prevActive.classList.add("is-active");
+  keepMagicFileActive(titleEl, durationMs = 4e3) {
+    const checkpoints = [0, 50, 120, 250, 500, 900, 1400, 2200, 3200, 4e3].filter((ms) => ms <= durationMs);
+    for (const ms of checkpoints) {
+      const timer = window.setTimeout(() => {
+        if (!titleEl.isConnected) return;
+        this.setMagicFileActive(titleEl);
+      }, ms);
+      this._magicSelectionKeepTimers.push(timer);
+    }
+  }
+  collectExplorerMethodsToBlock(explorer) {
+    const names = new Set(this._blockedExplorerMethodNames);
+    const pattern = /(reveal|expand|ensurevisible|setactive|select|focus|scrollto)/i;
+    let obj = explorer;
+    let depth = 0;
+    while (obj && depth < 4) {
+      for (const methodName of Object.getOwnPropertyNames(obj)) {
+        if (methodName === "constructor") continue;
+        if (names.has(methodName)) continue;
+        if (!pattern.test(methodName)) continue;
+        const descriptor = Object.getOwnPropertyDescriptor(obj, methodName);
+        if (descriptor && typeof descriptor.value === "function") {
+          names.add(methodName);
+        }
       }
-      if (Date.now() - start < lockMs) {
-        requestAnimationFrame(run);
+      obj = Object.getPrototypeOf(obj);
+      depth++;
+    }
+    return Array.from(names);
+  }
+  patchExplorerMethodsForBlock(explorer) {
+    var _a;
+    if (!explorer) return;
+    const originalMethods = (_a = explorer._magicOriginalExplorerMethods) != null ? _a : {};
+    explorer._magicOriginalExplorerMethods = originalMethods;
+    const methodsToBlock = this.collectExplorerMethodsToBlock(explorer);
+    for (const methodName of methodsToBlock) {
+      const method = explorer[methodName];
+      if (typeof method === "function" && !originalMethods[methodName]) {
+        originalMethods[methodName] = method;
+        explorer[methodName] = () => {
+          return;
+        };
       }
-    };
-    run();
+    }
+  }
+  restoreExplorerMethodsAfterBlock(explorer) {
+    if (!explorer) return;
+    const originalMethods = explorer._magicOriginalExplorerMethods;
+    if (!originalMethods) return;
+    for (const methodName of Object.keys(originalMethods)) {
+      explorer[methodName] = originalMethods[methodName];
+    }
+    delete explorer._magicOriginalExplorerMethods;
   }
   blockRevealInFolder(explorer) {
-    if (!explorer) return;
-    if (explorer.revealInFolder && !explorer._originalRevealInFolder) {
-      explorer._originalRevealInFolder = explorer.revealInFolder;
-      explorer.revealInFolder = () => {
-        console.log("Magic Folders: revealInFolder bloqu\xE9");
-      };
+    this._revealBlockCount++;
+    if (this._revealBlockCount > 1) return;
+    const explorers = this.getFileExplorers();
+    if (explorer && !explorers.includes(explorer)) {
+      explorers.push(explorer);
+    }
+    for (const explorerView of explorers) {
+      this.patchExplorerMethodsForBlock(explorerView);
     }
     if (!this._commandBlocked) {
       this._commandBlocked = true;
@@ -1346,10 +1428,16 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     }
   }
   unblockRevealInFolder(explorer) {
-    if (!explorer) return;
-    if (explorer._originalRevealInFolder) {
-      explorer.revealInFolder = explorer._originalRevealInFolder;
-      delete explorer._originalRevealInFolder;
+    if (this._revealBlockCount > 0) {
+      this._revealBlockCount--;
+    }
+    if (this._revealBlockCount > 0) return;
+    const explorers = this.getFileExplorers();
+    if (explorer && !explorers.includes(explorer)) {
+      explorers.push(explorer);
+    }
+    for (const explorerView of explorers) {
+      this.restoreExplorerMethodsAfterBlock(explorerView);
     }
     if (this._commandBlocked) {
       this._commandBlocked = false;
@@ -1809,17 +1897,18 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
       e.stopPropagation();
       e.stopImmediatePropagation();
       const explorer = this.getFileExplorer();
-      const container = explorer ? this.getFileExplorerContainer(explorer) : null;
-      const prevActive = container == null ? void 0 : container.querySelector(".nav-file-title.is-active");
-      const prevScrollTop = container ? container.scrollTop : null;
+      const blockDurationMs = 4e3;
+      this._lastMagicActiveTitleEl = titleEl;
       this.setMagicFileActive(titleEl);
+      this.keepMagicFileActive(titleEl, blockDurationMs);
       this.blockRevealInFolder(explorer);
       try {
         await this.app.workspace.openLinkText(cachedFile.path, "", e.ctrlKey || e.metaKey);
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        this.suppressExplorerSelection(container, prevActive, prevScrollTop);
       } finally {
-        setTimeout(() => this.unblockRevealInFolder(explorer), 3e3);
+        setTimeout(() => {
+          this.keepMagicFileActive(titleEl, 600);
+          this.unblockRevealInFolder(explorer);
+        }, blockDurationMs);
       }
     });
     this.registerDomEvent(titleEl, "contextmenu", (e) => {
@@ -2864,17 +2953,18 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
       e.stopPropagation();
       e.stopImmediatePropagation();
       const explorer = this.getFileExplorer();
-      const container = explorer ? this.getFileExplorerContainer(explorer) : null;
-      const prevActive = container == null ? void 0 : container.querySelector(".nav-file-title.is-active");
-      const prevScrollTop = container ? container.scrollTop : null;
+      const blockDurationMs = 4e3;
+      this._lastMagicActiveTitleEl = titleEl;
       this.setMagicFileActive(titleEl);
+      this.keepMagicFileActive(titleEl, blockDurationMs);
       this.blockRevealInFolder(explorer);
       try {
         await this.app.workspace.openLinkText(file.path, "", e.ctrlKey || e.metaKey);
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        this.suppressExplorerSelection(container, prevActive, prevScrollTop);
       } finally {
-        setTimeout(() => this.unblockRevealInFolder(explorer), 3e3);
+        setTimeout(() => {
+          this.keepMagicFileActive(titleEl, 600);
+          this.unblockRevealInFolder(explorer);
+        }, blockDurationMs);
       }
     });
     this.registerDomEvent(titleEl, "contextmenu", (e) => {
