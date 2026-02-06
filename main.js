@@ -125,6 +125,7 @@ var TRANSLATIONS = {
     menu_in_magic_folder: "In Magic Folder: {name}",
     menu_matched: "Matched: {filters}",
     menu_open: "Open",
+    menu_open_source: "Open in source folder",
     menu_open_new_tab: "Open in new tab",
     menu_do_magic: "Do Magic (Edit Filters)",
     menu_edit: "Edit Magic Folder",
@@ -140,6 +141,8 @@ var TRANSLATIONS = {
     menu_order_desc: "Order: Descending",
     menu_refresh: "Refresh",
     menu_delete: "Delete Magic Folder",
+    menu_mark_read: "Mark as Read",
+    menu_mark_unread: "Mark as Unread",
     menu_mark_all_read: "Mark all as Read",
     menu_mark_all_unread: "Mark all as Unread",
     command_create: "Create Magic Folder",
@@ -219,6 +222,7 @@ var TRANSLATIONS = {
     menu_in_magic_folder: "Dans Magic Folder : {name}",
     menu_matched: "Matched : {filters}",
     menu_open: "Ouvrir",
+    menu_open_source: "Ouvrir dans le dossier source",
     menu_open_new_tab: "Ouvrir dans un nouvel onglet",
     menu_do_magic: "Do Magic (\xE9diter les filtres)",
     menu_edit: "\xC9diter le Magic Folder",
@@ -234,6 +238,8 @@ var TRANSLATIONS = {
     menu_order_desc: "Ordre : D\xE9croissant",
     menu_refresh: "Rafra\xEEchir",
     menu_delete: "Supprimer le Magic Folder",
+    menu_mark_read: "Marquer comme lu",
+    menu_mark_unread: "Marquer comme non lu",
     menu_mark_all_read: "Tout marquer comme lu",
     menu_mark_all_unread: "Tout marquer comme non lu",
     command_create: "Cr\xE9er un Magic Folder",
@@ -313,6 +319,7 @@ var TRANSLATIONS = {
     menu_in_magic_folder: "En Magic Folder: {name}",
     menu_matched: "Coincide: {filters}",
     menu_open: "Abrir",
+    menu_open_source: "Abrir en carpeta de origen",
     menu_open_new_tab: "Abrir en nueva pesta\xF1a",
     menu_do_magic: "Do Magic (editar filtros)",
     menu_edit: "Editar Magic Folder",
@@ -328,6 +335,8 @@ var TRANSLATIONS = {
     menu_order_desc: "Orden: Descendente",
     menu_refresh: "Actualizar",
     menu_delete: "Eliminar Magic Folder",
+    menu_mark_read: "Marcar como leido",
+    menu_mark_unread: "Marcar como no leido",
     menu_mark_all_read: "Marcar todo como le\xEDdo",
     menu_mark_all_unread: "Marcar todo como no le\xEDdo",
     command_create: "Crear Magic Folder",
@@ -383,7 +392,7 @@ var TRANSLATIONS = {
     do_magic_preview_empty: "A\xF1ade filtros para ver coincidencias",
     do_magic_preview_none: "Ning\xFAn archivo coincide",
     do_magic_preview_count: "{count} archivos aparecer\xE1n en este Magic Folder:",
-    do_magic_apply: "Aplicar Magia \u2728"
+    do_magic_apply: "Aplicar magia \u2728"
   },
   de: {
     settings_title: "Magic Folders \u2013 Einstellungen",
@@ -407,6 +416,7 @@ var TRANSLATIONS = {
     menu_in_magic_folder: "In Magic Folder: {name}",
     menu_matched: "Treffer: {filters}",
     menu_open: "\xD6ffnen",
+    menu_open_source: "Im Quellordner oeffnen",
     menu_open_new_tab: "In neuem Tab \xF6ffnen",
     menu_do_magic: "Do Magic (Filter bearbeiten)",
     menu_edit: "Magic Folder bearbeiten",
@@ -422,6 +432,8 @@ var TRANSLATIONS = {
     menu_order_desc: "Reihenfolge: Absteigend",
     menu_refresh: "Aktualisieren",
     menu_delete: "Magic Folder l\xF6schen",
+    menu_mark_read: "Als gelesen markieren",
+    menu_mark_unread: "Als ungelesen markieren",
     menu_mark_all_read: "Alle als gelesen markieren",
     menu_mark_all_unread: "Alle als ungelesen markieren",
     command_create: "Magic Folder erstellen",
@@ -501,6 +513,7 @@ var TRANSLATIONS = {
     menu_in_magic_folder: "In Magic Folder: {name}",
     menu_matched: "Corrisponde: {filters}",
     menu_open: "Apri",
+    menu_open_source: "Apri nella cartella sorgente",
     menu_open_new_tab: "Apri in nuova scheda",
     menu_do_magic: "Do Magic (modifica filtri)",
     menu_edit: "Modifica Magic Folder",
@@ -516,6 +529,8 @@ var TRANSLATIONS = {
     menu_order_desc: "Ordine: Decrescente",
     menu_refresh: "Aggiorna",
     menu_delete: "Elimina Magic Folder",
+    menu_mark_read: "Segna come letto",
+    menu_mark_unread: "Segna come non letto",
     menu_mark_all_read: "Segna tutto come letto",
     menu_mark_all_unread: "Segna tutto come non letto",
     command_create: "Crea Magic Folder",
@@ -571,7 +586,7 @@ var TRANSLATIONS = {
     do_magic_preview_empty: "Aggiungi filtri per vedere i file",
     do_magic_preview_none: "Nessun file corrisponde",
     do_magic_preview_count: "<strong>{count}</strong> file appariranno in questo Magic Folder:",
-    do_magic_apply: "Applica Magia \u2728"
+    do_magic_apply: "Applica magia \u2728"
   }
 };
 var MagicFoldersSettingTab = class extends import_obsidian.PluginSettingTab {
@@ -619,7 +634,7 @@ var MagicFoldersSettingTab = class extends import_obsidian.PluginSettingTab {
       });
     });
     new import_obsidian.Setting(containerEl).setName(t("settings_language_name")).setDesc(t("settings_language_desc")).addDropdown((dropdown) => {
-      dropdown.addOption("fr", "Fran\xE7ais").addOption("en", "English").addOption("es", "Espa\xF1ol").addOption("de", "Deutsch").addOption("it", "Italiano").setValue(this.plugin.settings.language).onChange(async (value) => {
+      dropdown.addOption("fr", "Fran\xC3\xA7ais").addOption("en", "English").addOption("es", "Espa\xC3\xB1ol").addOption("de", "Deutsch").addOption("it", "Italiano").setValue(this.plugin.settings.language).onChange(async (value) => {
         this.plugin.settings.language = value;
         await this.plugin.saveSettings();
         this.display();
@@ -1102,20 +1117,20 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
 				border-left: 3px solid var(--magic-folder-color-bg, var(--text-accent));
 				padding-left: 6px !important;
 				/* Default color-mix logic for light theme */
-				background: linear-gradient(90deg,\xA0
+				background: linear-gradient(90deg, 
 					color-mix(in srgb, var(--magic-folder-color-bg, var(--text-accent)) 15%, transparent) 0%,
 					transparent 100%
 				);
 			}
 			/* Dark theme specific override to ensure overlay is visible and correct */
 			.theme-dark .magic-folder-item .nav-folder-title {
-				background: linear-gradient(90deg,\xA0
+				background: linear-gradient(90deg, 
 					color-mix(in srgb, var(--magic-folder-color-bg, var(--text-accent)) 15%, transparent) 0%,
 					transparent 100%
 				);
 			}
 			.magic-folder-item .nav-folder-title:hover {
-				background: linear-gradient(90deg,\xA0
+				background: linear-gradient(90deg, 
 					color-mix(in srgb, var(--magic-folder-color-bg, var(--text-accent)) 25%, transparent) 0%,
 					transparent 100%
 				);
@@ -1421,7 +1436,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
         if (revealCommand && !revealCommand._originalCallback) {
           revealCommand._originalCallback = revealCommand.callback;
           revealCommand.callback = () => {
-            console.log("Magic Folders: commande reveal-active-file bloqu\xE9e");
+            console.log("Magic Folders: commande reveal-active-file bloqu\xC3\xA9e");
           };
         }
       }
@@ -1449,7 +1464,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
           delete revealCommand._originalCallback;
         }
       }
-      console.log("Magic Folders: reveal d\xE9bloqu\xE9");
+      console.log("Magic Folders: reveal d\xC3\xA9bloqu\xC3\xA9");
     }
   }
   setupFileExplorerObserver() {
@@ -1840,7 +1855,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     const unreadSet = this.settings.highlightUnreadFiles && Array.isArray(magicFolder.unreadFilePaths) ? new Set(magicFolder.unreadFilePaths) : null;
     for (const cachedFile of cachedFiles) {
       const isNew = unreadSet ? unreadSet.has(cachedFile.path) : false;
-      const fileEl = this.createFileDOMFromCache(cachedFile, magicFolder.color, magicFolder.name, isNew);
+      const fileEl = this.createFileDOMFromCache(cachedFile, magicFolder.color, magicFolder.name, magicFolder.id, isNew);
       childrenEl.appendChild(fileEl);
     }
     folderEl.appendChild(childrenEl);
@@ -1874,7 +1889,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     });
     return folderEl;
   }
-  createFileDOMFromCache(cachedFile, folderColor, folderName, isNew) {
+  createFileDOMFromCache(cachedFile, folderColor, folderName, folderId, isNew) {
     const fileEl = document.createElement("div");
     fileEl.className = "tree-item nav-file";
     if (isNew) fileEl.addClass("magic-file-new");
@@ -1914,7 +1929,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     this.registerDomEvent(titleEl, "contextmenu", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      this.showMagicFileContextMenu(e, cachedFile.path, cachedFile.matchedFilters || [], folderName);
+      this.showMagicFileContextMenu(e, cachedFile.path, cachedFile.matchedFilters || [], folderName, folderId);
     });
     return fileEl;
   }
@@ -2410,6 +2425,26 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
       void this.saveSettings();
     }
   }
+  markFileAsReadInMagicFolder(folderId, filePath) {
+    const folder = this.settings.magicFolders.find((f) => f.id === folderId);
+    if (!folder || !Array.isArray(folder.unreadFilePaths) || folder.unreadFilePaths.length === 0) return;
+    if (!folder.unreadFilePaths.includes(filePath)) return;
+    folder.unreadFilePaths = folder.unreadFilePaths.filter((p) => p !== filePath);
+    this.updateUnreadBadgeInDom(folder.id);
+    this.removeUnreadClassInDom(folder.id, filePath);
+    void this.saveSettings();
+  }
+  markFileAsUnreadInMagicFolder(folderId, filePath) {
+    const folder = this.settings.magicFolders.find((f) => f.id === folderId);
+    if (!folder) return;
+    const unread = new Set(folder.unreadFilePaths || []);
+    if (unread.has(filePath)) return;
+    unread.add(filePath);
+    folder.unreadFilePaths = Array.from(unread);
+    this.updateUnreadBadgeInDom(folder.id);
+    this.addUnreadClassInDom(folder.id, filePath);
+    void this.saveSettings();
+  }
   updateUnreadBadgeInDom(folderId) {
     const folderEl = document.querySelector(`[data-magic-folder-id="${folderId}"]`);
     if (!folderEl) return;
@@ -2419,7 +2454,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     if (!badge) return;
     const folder = this.settings.magicFolders.find((f) => f.id === folderId);
     const unreadCount = (folder == null ? void 0 : folder.unreadFilePaths) ? folder.unreadFilePaths.length : 0;
-    if (!this.settings.showNewItemsBadge || !folder || !folder.collapsed || unreadCount === 0) {
+    if (!this.settings.showNewItemsBadge || !folder || unreadCount === 0) {
       badge.textContent = "";
       badge.addClass("is-hidden");
       return;
@@ -2547,6 +2582,15 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     if (!titleEl) return;
     const fileEl = titleEl.closest(".nav-file");
     if (fileEl) fileEl.removeClass("magic-file-new");
+  }
+  addUnreadClassInDom(folderId, filePath) {
+    if (!this.settings.highlightUnreadFiles) return;
+    const folderEl = document.querySelector(`[data-magic-folder-id="${folderId}"]`);
+    if (!folderEl) return;
+    const titleEl = folderEl.querySelector(`.nav-file-title[data-path="${CSS.escape(filePath)}"]`);
+    if (!titleEl) return;
+    const fileEl = titleEl.closest(".nav-file");
+    if (fileEl) fileEl.addClass("magic-file-new");
   }
   isExternalPath(filePath) {
     return /^[a-zA-Z]:[\\/]/.test(filePath) || filePath.startsWith("\\\\") || filePath.startsWith("/");
@@ -2760,12 +2804,12 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     if (!magicFolder.collapsed) return 0;
     return (magicFolder.unreadFilePaths || []).length;
   }
-  showMagicFileContextMenu(e, filePath, matchedFilters, folderName) {
+  showMagicFileContextMenu(e, filePath, matchedFilters, folderName, folderId) {
     const menu = new import_obsidian.Menu();
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (file instanceof import_obsidian.TFile) {
       menu.addItem((item) => {
-        item.setTitle(this.t("menu_open")).setIcon("file").onClick(() => {
+        item.setTitle(this.t("menu_open_source")).setIcon("file").onClick(() => {
           this.app.workspace.openLinkText(file.path, "", false);
         });
       });
@@ -2774,6 +2818,19 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
           this.app.workspace.openLinkText(file.path, "", true);
         });
       });
+    }
+    if (folderId) {
+      const folder = this.settings.magicFolders.find((f) => f.id === folderId);
+      if (folder) {
+        const unread = (folder.unreadFilePaths || []).includes(filePath);
+        menu.addSeparator();
+        menu.addItem((item) => {
+          item.setTitle(this.t("menu_mark_read")).setIcon("check-circle-2").setDisabled(!unread).onClick(() => this.markFileAsReadInMagicFolder(folderId, filePath));
+        });
+        menu.addItem((item) => {
+          item.setTitle(this.t("menu_mark_unread")).setIcon("circle").setDisabled(unread).onClick(() => this.markFileAsUnreadInMagicFolder(folderId, filePath));
+        });
+      }
     }
     if (folderName || matchedFilters.length > 0) {
       menu.addSeparator();
@@ -2895,7 +2952,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     const unreadSet = this.settings.highlightUnreadFiles && Array.isArray(magicFolder.unreadFilePaths) ? new Set(magicFolder.unreadFilePaths) : null;
     for (const fileWithFilters of filesWithFilters) {
       const isNew = unreadSet ? unreadSet.has(fileWithFilters.file.path) : false;
-      const fileEl = this.createFileDOM(fileWithFilters.file, fileWithFilters.matchedFilters, magicFolder.color, isNew);
+      const fileEl = this.createFileDOM(fileWithFilters.file, fileWithFilters.matchedFilters, magicFolder.color, isNew, magicFolder.id, magicFolder.name);
       childrenEl.appendChild(fileEl);
     }
     folderEl.appendChild(childrenEl);
@@ -2929,7 +2986,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     });
     return folderEl;
   }
-  createFileDOM(file, matchedFilters, folderColor, isNew) {
+  createFileDOM(file, matchedFilters, folderColor, isNew, folderId, folderName) {
     const fileEl = document.createElement("div");
     fileEl.className = "tree-item nav-file";
     if (isNew) fileEl.addClass("magic-file-new");
@@ -2970,7 +3027,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     this.registerDomEvent(titleEl, "contextmenu", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      this.showMagicFileContextMenu(e, file.path, matchedFilters);
+      this.showMagicFileContextMenu(e, file.path, matchedFilters, folderName, folderId);
     });
     return fileEl;
   }
@@ -3149,7 +3206,7 @@ var MagicFolderModal = class extends import_obsidian.Modal {
       customIconSize: (_c = existingFolder.customIconSize) != null ? _c : 28,
       hideCustomIconName: nameHidden,
       hideName: nameHidden
-      // Synchronisation forcée
+      // Synchronisation forcÃ©e
     } : {
       id: this.generateId(),
       name: this.plugin.t("modal_default_name"),
@@ -3908,7 +3965,41 @@ var DoMagicModal = class extends import_obsidian.Modal {
     this.modalEl.addClass("magic-folder-modal");
     const t = this.plugin.t.bind(this.plugin);
     const titleEl = contentEl.createEl("h2");
-    titleEl.innerHTML = `${t("do_magic_title")} - <span style="color: ${this.folder.color}">${this.folder.name}</span>`;
+    titleEl.createSpan({ text: t("do_magic_title") });
+    const folderName = (this.folder.name || "").trim();
+    if (folderName) {
+      const contextEl = titleEl.createSpan({ cls: "magic-do-title-context" });
+      contextEl.style.marginLeft = "8px";
+      contextEl.style.color = this.folder.color || "var(--text-muted)";
+      const iconEl = contextEl.createSpan({ cls: "magic-do-title-icon" });
+      iconEl.style.display = "inline-flex";
+      iconEl.style.alignItems = "center";
+      iconEl.style.justifyContent = "center";
+      iconEl.style.verticalAlign = "middle";
+      if (this.folder.customIconPath) {
+        const resourcePath = this.plugin.getCustomIconResource(this.folder.customIconPath);
+        if (resourcePath) {
+          const img = iconEl.createEl("img");
+          img.src = resourcePath;
+          img.className = "magic-folder-custom-icon";
+          img.style.width = "16px";
+          img.style.height = "16px";
+        }
+      }
+      if (iconEl.childElementCount === 0) {
+        if (this.folder.emoji) {
+          iconEl.textContent = this.folder.emoji;
+        } else {
+          (0, import_obsidian.setIcon)(iconEl, this.folder.icon || "folder");
+          const svg = iconEl.querySelector("svg");
+          if (svg) {
+            svg.style.width = "16px";
+            svg.style.height = "16px";
+          }
+        }
+      }
+      contextEl.createSpan({ text: ` ${folderName}` });
+    }
     const helpRow = contentEl.createDiv("magic-help-row");
     helpRow.createDiv({
       text: t("do_magic_help"),
@@ -3997,9 +4088,7 @@ var DoMagicModal = class extends import_obsidian.Modal {
     const quickInsert = contentEl.createDiv("magic-quick-insert");
     const insertToInput = (value) => {
       if (!this.filterInput) return;
-      const current = this.filterInput.value;
-      const needsSpace = current.length > 0 && !current.endsWith(" ");
-      this.filterInput.value = current + (needsSpace ? " " : "") + value;
+      this.filterInput.value = value;
       this.filterInput.focus();
     };
     const quickItems = [

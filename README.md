@@ -55,7 +55,6 @@ Magic Folders lets you create dynamic, filter-based virtual folders that appear 
   - [Performance](#performance)
 - [Troubleshooting](#troubleshooting)
 - [API and Data Model](#api-and-data-model)
-- [Changelog](#changelog)
 - [License](#license)
 
 ---
@@ -510,27 +509,6 @@ interface MagicFoldersSettings {
   showFileCount: boolean;
 }
 ```
-
----
-
-## Changelog
-
-### v1.0.0
-
-- Initial release
-- Virtual folder creation with tag, link, extension, folder, and frontmatter filters
-- OR / AND / NOT logic operators
-- 6 sorting modes with ascending/descending order
-- 30+ Lucide icons, full emoji picker, custom image icons
-- Icon size, offset, and aspect ratio controls
-- Color picker with opacity support
-- Unread file tracking with badges
-- Drag and drop folder reordering
-- 5-language support (EN, FR, ES, DE, IT)
-- Context menus for folders and files
-- Settings cache with background refresh
-- MutationObserver-based resilience against virtual scrolling
-- Direct file opening without explorer tree reveal or flash
 
 ---
 

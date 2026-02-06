@@ -1,5 +1,5 @@
 // Comment faire pour que lorsque je clique sur un fichier .md ou autre  cela n'ouvre pas l'arborescence d'origine dans l'explorateur ?
-// De plus, comment faire pour que quand j'ouvre un fichier different d'un .md (exemple pdf ou autre.. ça ne flash pas en faisant l'allez retour vers le fichier cible vers le folder virtuel de magic folder ?
+// De plus, comment faire pour que quand j'ouvre un fichier different d'un .md (exemple pdf ou autre.. Ã§a ne flash pas en faisant l'allez retour vers le fichier cible vers le folder virtuel de magic folder ?
 
 import {
 	Plugin,
@@ -150,6 +150,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_in_magic_folder: 'In Magic Folder: {name}',
 		menu_matched: 'Matched: {filters}',
 		menu_open: 'Open',
+		menu_open_source: 'Open in source folder',
 		menu_open_new_tab: 'Open in new tab',
 		menu_do_magic: 'Do Magic (Edit Filters)',
 		menu_edit: 'Edit Magic Folder',
@@ -165,6 +166,8 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_order_desc: 'Order: Descending',
 		menu_refresh: 'Refresh',
 		menu_delete: 'Delete Magic Folder',
+		menu_mark_read: 'Mark as Read',
+		menu_mark_unread: 'Mark as Unread',
 		menu_mark_all_read: 'Mark all as Read',
 		menu_mark_all_unread: 'Mark all as Unread',
 
@@ -224,7 +227,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		do_magic_preview_empty: 'Add filters to see matching files',
 		do_magic_preview_none: 'No files match your filters',
 		do_magic_preview_count: '<strong>{count}</strong> files will appear in this magic folder:',
-		do_magic_apply: 'Apply Magic ✨'
+		do_magic_apply: 'Apply Magic \u2728'
 	},
 	fr: {
 		settings_title: 'Magic Folders – Paramètres',
@@ -249,6 +252,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_in_magic_folder: 'Dans Magic Folder : {name}',
 		menu_matched: 'Matched : {filters}',
 		menu_open: 'Ouvrir',
+		menu_open_source: 'Ouvrir dans le dossier source',
 		menu_open_new_tab: 'Ouvrir dans un nouvel onglet',
 		menu_do_magic: 'Do Magic (éditer les filtres)',
 		menu_edit: 'Éditer le Magic Folder',
@@ -264,6 +268,8 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_order_desc: 'Ordre : Décroissant',
 		menu_refresh: 'Rafraîchir',
 		menu_delete: 'Supprimer le Magic Folder',
+		menu_mark_read: 'Marquer comme lu',
+		menu_mark_unread: 'Marquer comme non lu',
 		menu_mark_all_read: 'Tout marquer comme lu',
 		menu_mark_all_unread: 'Tout marquer comme non lu',
 
@@ -323,7 +329,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		do_magic_preview_empty: 'Ajoutez des filtres pour voir les fichiers',
 		do_magic_preview_none: 'Aucun fichier ne correspond',
 		do_magic_preview_count: '{count} fichiers apparaîtront dans ce Magic Folder :',
-		do_magic_apply: 'Appliquer la magie ✨'
+		do_magic_apply: 'Appliquer la magie \u2728'
 	},
 	es: {
 		settings_title: 'Magic Folders – Ajustes',
@@ -348,6 +354,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_in_magic_folder: 'En Magic Folder: {name}',
 		menu_matched: 'Coincide: {filters}',
 		menu_open: 'Abrir',
+		menu_open_source: 'Abrir en carpeta de origen',
 		menu_open_new_tab: 'Abrir en nueva pestaña',
 		menu_do_magic: 'Do Magic (editar filtros)',
 		menu_edit: 'Editar Magic Folder',
@@ -363,6 +370,8 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_order_desc: 'Orden: Descendente',
 		menu_refresh: 'Actualizar',
 		menu_delete: 'Eliminar Magic Folder',
+		menu_mark_read: 'Marcar como leido',
+		menu_mark_unread: 'Marcar como no leido',
 		menu_mark_all_read: 'Marcar todo como leído',
 		menu_mark_all_unread: 'Marcar todo como no leído',
 
@@ -422,7 +431,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		do_magic_preview_empty: 'Añade filtros para ver coincidencias',
 		do_magic_preview_none: 'Ningún archivo coincide',
 		do_magic_preview_count: '{count} archivos aparecerán en este Magic Folder:',
-		do_magic_apply: 'Aplicar Magia ✨'
+		do_magic_apply: 'Aplicar magia \u2728'
 	},
 	de: {
 		settings_title: 'Magic Folders – Einstellungen',
@@ -447,6 +456,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_in_magic_folder: 'In Magic Folder: {name}',
 		menu_matched: 'Treffer: {filters}',
 		menu_open: 'Öffnen',
+		menu_open_source: 'Im Quellordner oeffnen',
 		menu_open_new_tab: 'In neuem Tab öffnen',
 		menu_do_magic: 'Do Magic (Filter bearbeiten)',
 		menu_edit: 'Magic Folder bearbeiten',
@@ -462,6 +472,8 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_order_desc: 'Reihenfolge: Absteigend',
 		menu_refresh: 'Aktualisieren',
 		menu_delete: 'Magic Folder löschen',
+		menu_mark_read: 'Als gelesen markieren',
+		menu_mark_unread: 'Als ungelesen markieren',
 		menu_mark_all_read: 'Alle als gelesen markieren',
 		menu_mark_all_unread: 'Alle als ungelesen markieren',
 
@@ -521,7 +533,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		do_magic_preview_empty: 'Filter hinzufügen, um Dateien zu sehen',
 		do_magic_preview_none: 'Keine Dateien passen',
 		do_magic_preview_count: '<strong>{count}</strong> Dateien erscheinen in diesem Magic Folder:',
-		do_magic_apply: 'Magie anwenden ✨'
+		do_magic_apply: 'Magie anwenden \u2728'
 	},
 	it: {
 		settings_title: 'Magic Folders – Impostazioni',
@@ -546,6 +558,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_in_magic_folder: 'In Magic Folder: {name}',
 		menu_matched: 'Corrisponde: {filters}',
 		menu_open: 'Apri',
+		menu_open_source: 'Apri nella cartella sorgente',
 		menu_open_new_tab: 'Apri in nuova scheda',
 		menu_do_magic: 'Do Magic (modifica filtri)',
 		menu_edit: 'Modifica Magic Folder',
@@ -561,6 +574,8 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		menu_order_desc: 'Ordine: Decrescente',
 		menu_refresh: 'Aggiorna',
 		menu_delete: 'Elimina Magic Folder',
+		menu_mark_read: 'Segna come letto',
+		menu_mark_unread: 'Segna come non letto',
 		menu_mark_all_read: 'Segna tutto come letto',
 		menu_mark_all_unread: 'Segna tutto come non letto',
 
@@ -620,7 +635,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
 		do_magic_preview_empty: 'Aggiungi filtri per vedere i file',
 		do_magic_preview_none: 'Nessun file corrisponde',
 		do_magic_preview_count: '<strong>{count}</strong> file appariranno in questo Magic Folder:',
-		do_magic_apply: 'Applica Magia ✨'
+		do_magic_apply: 'Applica magia \u2728'
 	}
 };
 
@@ -706,9 +721,9 @@ class MagicFoldersSettingTab extends PluginSettingTab {
 			.setDesc(t('settings_language_desc'))
 			.addDropdown(dropdown => {
 				dropdown
-					.addOption('fr', 'Français')
+					.addOption('fr', 'FranÃ§ais')
 					.addOption('en', 'English')
-					.addOption('es', 'Español')
+					.addOption('es', 'EspaÃ±ol')
 					.addOption('de', 'Deutsch')
 					.addOption('it', 'Italiano')
 					.setValue(this.plugin.settings.language)
@@ -898,7 +913,7 @@ export default class MagicFoldersPlugin extends Plugin {
 			if (folder.customIconOffsetX === void 0) {
 				folder.customIconOffsetX = 0;
 			}
-			// PRIORITÉ À hideName s'il existe
+			// PRIORITÃ‰ Ã€ hideName s'il existe
 			if (folder.hideName !== undefined) {
 				folder.hideCustomIconName = folder.hideName;
 			} else {
@@ -1207,20 +1222,20 @@ export default class MagicFoldersPlugin extends Plugin {
 				border-left: 3px solid var(--magic-folder-color-bg, var(--text-accent));
 				padding-left: 6px !important;
 				/* Default color-mix logic for light theme */
-				background: linear-gradient(90deg, 
+				background: linear-gradient(90deg, 
 					color-mix(in srgb, var(--magic-folder-color-bg, var(--text-accent)) 15%, transparent) 0%,
 					transparent 100%
 				);
 			}
 			/* Dark theme specific override to ensure overlay is visible and correct */
 			.theme-dark .magic-folder-item .nav-folder-title {
-				background: linear-gradient(90deg, 
+				background: linear-gradient(90deg, 
 					color-mix(in srgb, var(--magic-folder-color-bg, var(--text-accent)) 15%, transparent) 0%,
 					transparent 100%
 				);
 			}
 			.magic-folder-item .nav-folder-title:hover {
-				background: linear-gradient(90deg, 
+				background: linear-gradient(90deg, 
 					color-mix(in srgb, var(--magic-folder-color-bg, var(--text-accent)) 25%, transparent) 0%,
 					transparent 100%
 				);
@@ -1537,8 +1552,8 @@ export default class MagicFoldersPlugin extends Plugin {
 				if (revealCommand && !revealCommand._originalCallback) {
 					revealCommand._originalCallback = revealCommand.callback;
 					revealCommand.callback = () => {
-						console.log("Magic Folders: commande reveal-active-file bloquée");
-						// Ne rien faire - bloquer l'exécution
+						console.log("Magic Folders: commande reveal-active-file bloquÃ©e");
+						// Ne rien faire - bloquer l'exÃ©cution
 					};
 				}
 			}
@@ -1555,7 +1570,7 @@ export default class MagicFoldersPlugin extends Plugin {
 			explorers.push(explorer);
 		}
 
-		// Restaurer les méthodes de reveal/expand
+		// Restaurer les mÃ©thodes de reveal/expand
 		for (const explorerView of explorers) {
 			this.restoreExplorerMethodsAfterBlock(explorerView);
 		}
@@ -1571,7 +1586,7 @@ export default class MagicFoldersPlugin extends Plugin {
 					delete revealCommand._originalCallback;
 				}
 			}
-			console.log("Magic Folders: reveal débloqué");
+			console.log("Magic Folders: reveal dÃ©bloquÃ©");
 		}
 	}
 
@@ -1975,7 +1990,7 @@ export default class MagicFoldersPlugin extends Plugin {
 			: null;
 		for (const cachedFile of cachedFiles) {
 			const isNew = unreadSet ? unreadSet.has(cachedFile.path) : false;
-			const fileEl = this.createFileDOMFromCache(cachedFile, magicFolder.color, magicFolder.name, isNew);
+			const fileEl = this.createFileDOMFromCache(cachedFile, magicFolder.color, magicFolder.name, magicFolder.id, isNew);
 			childrenEl.appendChild(fileEl);
 		}
 		folderEl.appendChild(childrenEl);
@@ -2009,7 +2024,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		});
 		return folderEl;
 	}
-	createFileDOMFromCache(cachedFile, folderColor, folderName, isNew) {
+	createFileDOMFromCache(cachedFile, folderColor, folderName, folderId, isNew) {
 		const fileEl = document.createElement("div");
 		fileEl.className = "tree-item nav-file";
 		if (isNew) fileEl.addClass("magic-file-new");
@@ -2037,7 +2052,7 @@ export default class MagicFoldersPlugin extends Plugin {
 			this.setMagicFileActive(titleEl);
 			this.keepMagicFileActive(titleEl, blockDurationMs);
 
-			// Bloquer temporairement revealInFolder pour empêcher l'ouverture de l'arborescence
+			// Bloquer temporairement revealInFolder pour empÃªcher l'ouverture de l'arborescence
 			this.blockRevealInFolder(explorer);
 
 			try {
@@ -2052,7 +2067,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		this.registerDomEvent(titleEl, "contextmenu", (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-			this.showMagicFileContextMenu(e, cachedFile.path, cachedFile.matchedFilters || [], folderName);
+			this.showMagicFileContextMenu(e, cachedFile.path, cachedFile.matchedFilters || [], folderName, folderId);
 		});
 		return fileEl;
 	}
@@ -2549,6 +2564,26 @@ export default class MagicFoldersPlugin extends Plugin {
 			void this.saveSettings();
 		}
 	}
+	markFileAsReadInMagicFolder(folderId, filePath) {
+		const folder = this.settings.magicFolders.find((f) => f.id === folderId);
+		if (!folder || !Array.isArray(folder.unreadFilePaths) || folder.unreadFilePaths.length === 0) return;
+		if (!folder.unreadFilePaths.includes(filePath)) return;
+		folder.unreadFilePaths = folder.unreadFilePaths.filter((p) => p !== filePath);
+		this.updateUnreadBadgeInDom(folder.id);
+		this.removeUnreadClassInDom(folder.id, filePath);
+		void this.saveSettings();
+	}
+	markFileAsUnreadInMagicFolder(folderId, filePath) {
+		const folder = this.settings.magicFolders.find((f) => f.id === folderId);
+		if (!folder) return;
+		const unread = new Set(folder.unreadFilePaths || []);
+		if (unread.has(filePath)) return;
+		unread.add(filePath);
+		folder.unreadFilePaths = Array.from(unread);
+		this.updateUnreadBadgeInDom(folder.id);
+		this.addUnreadClassInDom(folder.id, filePath);
+		void this.saveSettings();
+	}
 	updateUnreadBadgeInDom(folderId) {
 		const folderEl = document.querySelector(`[data-magic-folder-id="${folderId}"]`);
 		if (!folderEl) return;
@@ -2558,7 +2593,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		if (!badge) return;
 		const folder = this.settings.magicFolders.find((f) => f.id === folderId);
 		const unreadCount = (folder == null ? void 0 : folder.unreadFilePaths) ? folder.unreadFilePaths.length : 0;
-		if (!this.settings.showNewItemsBadge || !folder || !folder.collapsed || unreadCount === 0) {
+		if (!this.settings.showNewItemsBadge || !folder || unreadCount === 0) {
 			badge.textContent = "";
 			badge.addClass("is-hidden");
 			return;
@@ -2638,7 +2673,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		} else {
 			 // Emoji / Text
 			 iconWrap.style.fontSize = `${size}px`;
-			 iconWrap.style.display = "inline-block"; 
+			 iconWrap.style.display = "inline-block"; 
 			 iconWrap.style.transform = `translate(${x}px, ${y}px)`;
 		}
 	}
@@ -2705,6 +2740,15 @@ export default class MagicFoldersPlugin extends Plugin {
 		if (!titleEl) return;
 		const fileEl = titleEl.closest(".nav-file");
 		if (fileEl) fileEl.removeClass("magic-file-new");
+	}
+	addUnreadClassInDom(folderId, filePath) {
+		if (!this.settings.highlightUnreadFiles) return;
+		const folderEl = document.querySelector(`[data-magic-folder-id="${folderId}"]`);
+		if (!folderEl) return;
+		const titleEl = folderEl.querySelector(`.nav-file-title[data-path="${CSS.escape(filePath)}"]`);
+		if (!titleEl) return;
+		const fileEl = titleEl.closest(".nav-file");
+		if (fileEl) fileEl.addClass("magic-file-new");
 	}
 	isExternalPath(filePath) {
 		return /^[a-zA-Z]:[\\/]/.test(filePath) || filePath.startsWith("\\\\") || filePath.startsWith("/");
@@ -2918,12 +2962,12 @@ export default class MagicFoldersPlugin extends Plugin {
 		if (!magicFolder.collapsed) return 0;
 		return (magicFolder.unreadFilePaths || []).length;
 	}
-	showMagicFileContextMenu(e, filePath, matchedFilters, folderName) {
+	showMagicFileContextMenu(e, filePath, matchedFilters, folderName, folderId) {
 		const menu = new Menu();
 		const file = this.app.vault.getAbstractFileByPath(filePath);
 		if (file instanceof TFile) {
 			menu.addItem((item) => {
-				item.setTitle(this.t('menu_open')).setIcon("file").onClick(() => {
+				item.setTitle(this.t('menu_open_source')).setIcon("file").onClick(() => {
 					this.app.workspace.openLinkText(file.path, "", false);
 				});
 			});
@@ -2932,6 +2976,25 @@ export default class MagicFoldersPlugin extends Plugin {
 					this.app.workspace.openLinkText(file.path, "", true);
 				});
 			});
+		}
+		if (folderId) {
+			const folder = this.settings.magicFolders.find((f) => f.id === folderId);
+			if (folder) {
+				const unread = (folder.unreadFilePaths || []).includes(filePath);
+				menu.addSeparator();
+				menu.addItem((item) => {
+					item.setTitle(this.t('menu_mark_read'))
+						.setIcon("check-circle-2")
+						.setDisabled(!unread)
+						.onClick(() => this.markFileAsReadInMagicFolder(folderId, filePath));
+				});
+				menu.addItem((item) => {
+					item.setTitle(this.t('menu_mark_unread'))
+						.setIcon("circle")
+						.setDisabled(unread)
+						.onClick(() => this.markFileAsUnreadInMagicFolder(folderId, filePath));
+				});
+			}
 		}
 		if (folderName || matchedFilters.length > 0) {
 			menu.addSeparator();
@@ -3064,7 +3127,7 @@ export default class MagicFoldersPlugin extends Plugin {
 			: null;
 		for (const fileWithFilters of filesWithFilters) {
 			const isNew = unreadSet ? unreadSet.has(fileWithFilters.file.path) : false;
-			const fileEl = this.createFileDOM(fileWithFilters.file, fileWithFilters.matchedFilters, magicFolder.color, isNew);
+			const fileEl = this.createFileDOM(fileWithFilters.file, fileWithFilters.matchedFilters, magicFolder.color, isNew, magicFolder.id, magicFolder.name);
 			childrenEl.appendChild(fileEl);
 		}
 		folderEl.appendChild(childrenEl);
@@ -3098,7 +3161,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		});
 		return folderEl;
 	}
-	createFileDOM(file, matchedFilters, folderColor, isNew) {
+	createFileDOM(file, matchedFilters, folderColor, isNew, folderId, folderName) {
 		const fileEl = document.createElement("div");
 		fileEl.className = "tree-item nav-file";
 		if (isNew) fileEl.addClass("magic-file-new");
@@ -3127,7 +3190,7 @@ export default class MagicFoldersPlugin extends Plugin {
 			this.setMagicFileActive(titleEl);
 			this.keepMagicFileActive(titleEl, blockDurationMs);
 
-			// Bloquer temporairement revealInFolder pour empêcher l'ouverture de l'arborescence
+			// Bloquer temporairement revealInFolder pour empÃªcher l'ouverture de l'arborescence
 			this.blockRevealInFolder(explorer);
 
 			try {
@@ -3142,7 +3205,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		this.registerDomEvent(titleEl, "contextmenu", (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-			this.showMagicFileContextMenu(e, file.path, matchedFilters);
+			this.showMagicFileContextMenu(e, file.path, matchedFilters, folderName, folderId);
 		});
 		return fileEl;
 	}
@@ -3320,7 +3383,7 @@ class MagicFolderModal extends Modal {
 		this.isNew = !existingFolder;
 		
 		// Initialisation de l'objet folder
-		const nameHidden = existingFolder 
+		const nameHidden = existingFolder 
 			? (existingFolder.hideName !== undefined ? existingFolder.hideName : (existingFolder.hideCustomIconName || false))
 			: false;
 
@@ -3332,7 +3395,7 @@ class MagicFolderModal extends Modal {
 			customIconOffsetY: existingFolder.customIconOffsetY ?? 0,
 			customIconSize: existingFolder.customIconSize ?? 28,
 			hideCustomIconName: nameHidden,
-			hideName: nameHidden // Synchronisation forcée
+			hideName: nameHidden // Synchronisation forcÃ©e
 		} : {
 			id: this.generateId(),
 			name: this.plugin.t('modal_default_name'),
@@ -3384,7 +3447,7 @@ class MagicFolderModal extends Modal {
 				this.folder.hideName = value;
 				this.folder.hideCustomIconName = value; // Sync old prop too
 				
-				// Mise à jour visuelle LIVE (sans sauvegarde disque)
+				// Mise Ã  jour visuelle LIVE (sans sauvegarde disque)
 				this.plugin.updateHideNameInDom(this.folder.id, value);
 				if (!this.isNew) {
 					const liveFolder = this.plugin.settings.magicFolders.find((f) => f.id === this.folder.id);
@@ -3761,7 +3824,7 @@ class MagicFolderModal extends Modal {
 				new Notice(this.plugin.t('notice_name_required'));
 				return;
 			}
-			// C'est ICI que la sauvegarde réelle se fait
+			// C'est ICI que la sauvegarde rÃ©elle se fait
 			if (this.isNew) {
 				await this.plugin.createMagicFolder(this.folder);
 			} else {
@@ -3827,8 +3890,8 @@ class DoMagicModal extends Modal {
 			}
 
 			if (cache.frontmatter?.tags) {
-				const fmTags = Array.isArray(cache.frontmatter.tags) 
-					? cache.frontmatter.tags 
+				const fmTags = Array.isArray(cache.frontmatter.tags) 
+					? cache.frontmatter.tags 
 					: [cache.frontmatter.tags];
 				for (const tag of fmTags) {
 					tagSet.add('#' + String(tag).replace(/^#/, ''));
@@ -3856,7 +3919,44 @@ class DoMagicModal extends Modal {
 		const t = this.plugin.t.bind(this.plugin);
 
 		const titleEl = contentEl.createEl('h2');
-		titleEl.innerHTML = `${t('do_magic_title')} - <span style="color: ${this.folder.color}">${this.folder.name}</span>`;
+		titleEl.createSpan({ text: t('do_magic_title') });
+		const folderName = (this.folder.name || '').trim();
+		if (folderName) {
+			const contextEl = titleEl.createSpan({ cls: 'magic-do-title-context' });
+			contextEl.style.marginLeft = '8px';
+			contextEl.style.color = this.folder.color || 'var(--text-muted)';
+
+			const iconEl = contextEl.createSpan({ cls: 'magic-do-title-icon' });
+			iconEl.style.display = 'inline-flex';
+			iconEl.style.alignItems = 'center';
+			iconEl.style.justifyContent = 'center';
+			iconEl.style.verticalAlign = 'middle';
+
+			if (this.folder.customIconPath) {
+				const resourcePath = this.plugin.getCustomIconResource(this.folder.customIconPath);
+				if (resourcePath) {
+					const img = iconEl.createEl('img');
+					img.src = resourcePath;
+					img.className = 'magic-folder-custom-icon';
+					img.style.width = '16px';
+					img.style.height = '16px';
+				}
+			}
+			if (iconEl.childElementCount === 0) {
+				if (this.folder.emoji) {
+					iconEl.textContent = this.folder.emoji;
+				} else {
+					setIcon(iconEl, this.folder.icon || 'folder');
+					const svg = iconEl.querySelector('svg');
+					if (svg) {
+						svg.style.width = '16px';
+						svg.style.height = '16px';
+					}
+				}
+			}
+
+			contextEl.createSpan({ text: ` ${folderName}` });
+		}
 
 		const helpRow = contentEl.createDiv('magic-help-row');
 		helpRow.createDiv({
@@ -3915,7 +4015,7 @@ class DoMagicModal extends Modal {
 			
 			const colors: Record<LogicOperator, string> = {
 				'OR': '#2ecc71',
-				'AND': '#3498db', 
+				'AND': '#3498db', 
 				'NOT': '#e74c3c'
 			};
 			
@@ -3961,9 +4061,7 @@ class DoMagicModal extends Modal {
 		const quickInsert = contentEl.createDiv('magic-quick-insert');
 		const insertToInput = (value: string) => {
 			if (!this.filterInput) return;
-			const current = this.filterInput.value;
-			const needsSpace = current.length > 0 && !current.endsWith(' ');
-			this.filterInput.value = current + (needsSpace ? ' ' : '') + value;
+			this.filterInput.value = value;
 			this.filterInput.focus();
 		};
 		const quickItems = [
@@ -4193,8 +4291,8 @@ class DoMagicModal extends Modal {
 
 	highlightSuggestion(items: NodeListOf<Element>) {
 		items.forEach((item, index) => {
-			(item as HTMLElement).style.background = index === this.selectedSuggestionIndex 
-				? 'var(--background-modifier-hover)' 
+			(item as HTMLElement).style.background = index === this.selectedSuggestionIndex 
+				? 'var(--background-modifier-hover)' 
 				: '';
 		});
 
@@ -4275,7 +4373,7 @@ class DoMagicModal extends Modal {
 		this.filtersContainer.empty();
 
 		if (this.folder.filters.length === 0) {
-			this.filtersContainer.createEl('p', { 
+			this.filtersContainer.createEl('p', { 
 				text: 'No filters yet. Add tags or links above!',
 				cls: 'setting-item-description'
 			});
@@ -4360,7 +4458,7 @@ class DoMagicModal extends Modal {
 
 				tagEl.createSpan({ text: displayValue });
 
-				const removeEl = tagEl.createSpan({ text: '×', cls: 'remove-filter' });
+				const removeEl = tagEl.createSpan({ text: '\u00D7', cls: 'remove-filter' });
 				removeEl.addEventListener('click', () => this.removeFilter(filterIndex));
 			}
 		}
@@ -4373,7 +4471,7 @@ class DoMagicModal extends Modal {
 		this.previewContainer.empty();
 
 		if (this.folder.filters.length === 0) {
-			this.previewContainer.createEl('p', { 
+			this.previewContainer.createEl('p', { 
 				text: t('do_magic_preview_empty'),
 				cls: 'setting-item-description'
 			});
@@ -4383,7 +4481,7 @@ class DoMagicModal extends Modal {
 		const files = await (this.plugin as any).getMatchingFiles(this.folder);
 
 		if (files.length === 0) {
-			this.previewContainer.createEl('p', { 
+			this.previewContainer.createEl('p', { 
 				text: t('do_magic_preview_none'),
 				cls: 'setting-item-description'
 			});
