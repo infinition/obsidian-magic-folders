@@ -51,7 +51,8 @@ var DEFAULT_SETTINGS = {
   customIconFolder: "",
   showNewItemsBadge: true,
   highlightUnreadFiles: true,
-  showFileCount: true
+  showFileCount: true,
+  enableLuminaTags: false
 };
 var AVAILABLE_ICONS = [
   "folder-search",
@@ -198,7 +199,9 @@ var TRANSLATIONS = {
     do_magic_preview_empty: "Add filters to see matching files",
     do_magic_preview_none: "No files match your filters",
     do_magic_preview_count: "<strong>{count}</strong> files will appear in this magic folder:",
-    do_magic_apply: "Apply Magic \u2728"
+    do_magic_apply: "Apply Magic \u2728",
+    settings_lumina_tags_name: "Lumina Tags integration",
+    settings_lumina_tags_desc: "Use tags from Obsidian Lumina (.obsidian/lumina-tags.json) to match files in magic folders. This allows matching any file type (PDF, images, videos, etc.) tagged via the Lumina plugin."
   },
   fr: {
     settings_title: "Magic Folders \u2013 Param\xE8tres",
@@ -295,7 +298,9 @@ var TRANSLATIONS = {
     do_magic_preview_empty: "Ajoutez des filtres pour voir les fichiers",
     do_magic_preview_none: "Aucun fichier ne correspond",
     do_magic_preview_count: "{count} fichiers appara\xEEtront dans ce Magic Folder :",
-    do_magic_apply: "Appliquer la magie \u2728"
+    do_magic_apply: "Appliquer la magie \u2728",
+    settings_lumina_tags_name: "Int\xE9gration Lumina Tags",
+    settings_lumina_tags_desc: "Utiliser les tags d'Obsidian Lumina (.obsidian/lumina-tags.json) pour associer des fichiers aux Magic Folders. Permet de matcher tous types de fichiers (PDF, images, vid\xE9os, etc.) tagg\xE9s via le plugin Lumina."
   },
   es: {
     settings_title: "Magic Folders \u2013 Ajustes",
@@ -392,7 +397,9 @@ var TRANSLATIONS = {
     do_magic_preview_empty: "A\xF1ade filtros para ver coincidencias",
     do_magic_preview_none: "Ning\xFAn archivo coincide",
     do_magic_preview_count: "{count} archivos aparecer\xE1n en este Magic Folder:",
-    do_magic_apply: "Aplicar magia \u2728"
+    do_magic_apply: "Aplicar magia \u2728",
+    settings_lumina_tags_name: "Integraci\xF3n Lumina Tags",
+    settings_lumina_tags_desc: "Usar tags de Obsidian Lumina (.obsidian/lumina-tags.json) para asociar archivos a los Magic Folders. Permite incluir cualquier tipo de archivo (PDF, im\xE1genes, v\xEDdeos, etc.) etiquetado por Lumina."
   },
   de: {
     settings_title: "Magic Folders \u2013 Einstellungen",
@@ -489,7 +496,9 @@ var TRANSLATIONS = {
     do_magic_preview_empty: "Filter hinzuf\xFCgen, um Dateien zu sehen",
     do_magic_preview_none: "Keine Dateien passen",
     do_magic_preview_count: "<strong>{count}</strong> Dateien erscheinen in diesem Magic Folder:",
-    do_magic_apply: "Magie anwenden \u2728"
+    do_magic_apply: "Magie anwenden \u2728",
+    settings_lumina_tags_name: "Lumina Tags Integration",
+    settings_lumina_tags_desc: "Lumina Tags aus .obsidian/lumina-tags.json verwenden, um Dateien in Magic Folders zuzuordnen. Damit k\xF6nnen alle Dateitypen (PDF, Bilder, Videos usw.) die \xFCber Lumina getaggt wurden, erkannt werden."
   },
   it: {
     settings_title: "Magic Folders \u2013 Impostazioni",
@@ -586,7 +595,9 @@ var TRANSLATIONS = {
     do_magic_preview_empty: "Aggiungi filtri per vedere i file",
     do_magic_preview_none: "Nessun file corrisponde",
     do_magic_preview_count: "<strong>{count}</strong> file appariranno in questo Magic Folder:",
-    do_magic_apply: "Applica magia \u2728"
+    do_magic_apply: "Applica magia \u2728",
+    settings_lumina_tags_name: "Integrazione Lumina Tags",
+    settings_lumina_tags_desc: "Usa i tag di Obsidian Lumina (.obsidian/lumina-tags.json) per associare file ai Magic Folder. Consente di includere qualsiasi tipo di file (PDF, immagini, video, ecc.) taggati tramite Lumina."
   }
 };
 var MagicFoldersSettingTab = class extends import_obsidian.PluginSettingTab {
@@ -657,6 +668,20 @@ var MagicFoldersSettingTab = class extends import_obsidian.PluginSettingTab {
     if (!this.plugin.settings.customIconsEnabled) {
       iconPathSetting.setDisabled(true);
     }
+    new import_obsidian.Setting(containerEl).setName(t("settings_lumina_tags_name")).setDesc(t("settings_lumina_tags_desc")).addToggle((toggle) => {
+      toggle.setValue(this.plugin.settings.enableLuminaTags).onChange(async (value) => {
+        this.plugin.settings.enableLuminaTags = value;
+        await this.plugin.saveSettings();
+        if (value) {
+          await this.plugin.loadLuminaTags();
+          this.plugin.startLuminaTagsWatcher();
+        } else {
+          this.plugin.stopLuminaTagsWatcher();
+          this.plugin._luminaTagCache = {};
+        }
+        this.plugin.renderAllMagicFolders();
+      });
+    });
   }
 };
 var MagicFoldersPlugin = class extends import_obsidian.Plugin {
@@ -677,6 +702,8 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     this.customIconLocalStorageKeyPrefix = "magic-folders-icon-cache:";
     this._commandBlocked = false;
     this._revealBlockCount = 0;
+    this._luminaTagCache = {};
+    this._luminaWatchUnregister = null;
     this._magicSelectionKeepTimers = [];
     this._lastMagicActiveTitleEl = null;
     this._blockedExplorerMethodNames = [
@@ -707,7 +734,11 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     setTimeout(() => {
       this.addSettingTab(new MagicFoldersSettingTab(this.app, this));
     }, 0);
-    this.app.workspace.onLayoutReady(() => {
+    this.app.workspace.onLayoutReady(async () => {
+      if (this.settings.enableLuminaTags) {
+        await this.loadLuminaTags();
+        this.startLuminaTagsWatcher();
+      }
       this.insertCreateButton();
       this.renderFromCache();
       setTimeout(() => {
@@ -770,6 +801,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
   }
   onunload() {
     console.log("Unloading Magic Folders plugin");
+    this.stopLuminaTagsWatcher();
     this.removeAllVirtualFolders();
     this.clearTooltips();
     for (const timer of this._magicSelectionKeepTimers) {
@@ -844,20 +876,94 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     if (this.settings.showFileCount === void 0) {
       this.settings.showFileCount = true;
     }
+    if (this.settings.enableLuminaTags === void 0) {
+      this.settings.enableLuminaTags = false;
+    }
   }
   async saveSettings() {
     await this.saveData(this.settings);
   }
+  /**
+   * Load Lumina tags from .obsidian/lumina-tags.json
+   */
+  async loadLuminaTags() {
+    if (!this.settings.enableLuminaTags) {
+      this._luminaTagCache = {};
+      return;
+    }
+    try {
+      const adapter = this.app.vault.adapter;
+      const sharedPath = ".obsidian/lumina-tags.json";
+      if (await adapter.exists(sharedPath)) {
+        const raw = await adapter.read(sharedPath);
+        const data = JSON.parse(raw);
+        this._luminaTagCache = data && data.tags && typeof data.tags === "object" ? data.tags : {};
+      } else {
+        this._luminaTagCache = {};
+      }
+    } catch (e) {
+      console.warn("[MagicFolders] Failed to load Lumina tags:", e);
+      this._luminaTagCache = {};
+    }
+  }
+  /**
+   * Start watching .obsidian/lumina-tags.json for changes
+   */
+  startLuminaTagsWatcher() {
+    this.stopLuminaTagsWatcher();
+    if (!this.settings.enableLuminaTags) return;
+    const handler = (file) => {
+      if (file.path === ".obsidian/lumina-tags.json") {
+        this.loadLuminaTags().then(() => this.scheduleRefresh());
+      }
+    };
+    const ref = this.app.vault.on("modify", handler);
+    this.registerEvent(ref);
+    this._luminaWatchUnregister = () => {
+      this.app.vault.offref(ref);
+    };
+  }
+  stopLuminaTagsWatcher() {
+    if (this._luminaWatchUnregister) {
+      this._luminaWatchUnregister();
+      this._luminaWatchUnregister = null;
+    }
+  }
+  /**
+   * Check if a file has a tag in the Lumina tag cache.
+   * Handles both #hashtag and [[link]] style tags.
+   */
+  fileHasLuminaTag(filePath, tagValue) {
+    const tags = this._luminaTagCache[filePath];
+    if (!tags || tags.length === 0) return false;
+    const normalizedSearch = tagValue.replace(/^#/, "").toLowerCase();
+    for (const tag of tags) {
+      const normalizedTag = tag.replace(/^#/, "").toLowerCase();
+      if (normalizedTag === normalizedSearch || normalizedTag.startsWith(normalizedSearch + "/")) {
+        return true;
+      }
+    }
+    return false;
+  }
+  /**
+   * Check if a file has a link in the Lumina tag cache.
+   * Lumina stores [[link]] references as tags.
+   */
+  fileHasLuminaLink(filePath, linkValue) {
+    const tags = this._luminaTagCache[filePath];
+    if (!tags || tags.length === 0) return false;
+    const normalizedSearch = linkValue.replace(/^\[\[|\]\]$/g, "").toLowerCase();
+    for (const tag of tags) {
+      if (!tag.startsWith("[[")) continue;
+      const normalizedLink = tag.replace(/^\[\[|\]\]$/g, "").toLowerCase();
+      if (normalizedLink === normalizedSearch || normalizedLink.includes(normalizedSearch)) {
+        return true;
+      }
+    }
+    return false;
+  }
   onFileMenu(menu, file, source) {
     if (!(file instanceof import_obsidian.TFile) && !(file instanceof import_obsidian.TFolder)) return;
-    if (file instanceof import_obsidian.TFolder) {
-      menu.addSeparator();
-      menu.addItem((item) => {
-        item.setTitle(this.t("menu_create_here")).setIcon("wand-2").onClick(() => {
-          this.openCreateMagicFolderModal();
-        });
-      });
-    }
     if (file instanceof import_obsidian.TFile) {
       for (const magicFolder of this.settings.magicFolders) {
         const cache = this.matchedFiltersCache.get(magicFolder.id);
@@ -2047,7 +2153,9 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
   }
   async getMatchingFilesWithFilters(magicFolder) {
     const hasExtensionFilter = magicFolder.filters.some((f) => f.type === "extension");
-    const allFiles = hasExtensionFilter ? this.app.vault.getFiles() : this.app.vault.getMarkdownFiles();
+    const hasTagOrLinkFilter = magicFolder.filters.some((f) => f.type === "tag" || f.type === "link");
+    const needAllFiles = hasExtensionFilter || this.settings.enableLuminaTags && hasTagOrLinkFilter;
+    const allFiles = needAllFiles ? this.app.vault.getFiles() : this.app.vault.getMarkdownFiles();
     const matchingFiles = [];
     for (const file of allFiles) {
       const result = await this.checkFileMatchesFilters(file, magicFolder.filters);
@@ -2094,9 +2202,9 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     var _a;
     switch (filter.type) {
       case "tag":
-        return this.fileHasTag(cache, filter.value);
+        return this.fileHasTag(cache, filter.value) || this.settings.enableLuminaTags && this.fileHasLuminaTag(file.path, filter.value);
       case "link":
-        return this.fileHasLink(cache, filter.value);
+        return this.fileHasLink(cache, filter.value) || this.settings.enableLuminaTags && this.fileHasLuminaLink(file.path, filter.value);
       case "folder":
         return this.matchString(((_a = file.parent) == null ? void 0 : _a.path) || "", filter.value, filter.operator);
       case "extension":
@@ -3954,6 +4062,18 @@ var DoMagicModal = class extends import_obsidian.Modal {
         }
       }
       linkSet.add(file.basename);
+    }
+    if (this.plugin.settings.enableLuminaTags) {
+      for (const [, tags] of Object.entries(this.plugin._luminaTagCache)) {
+        if (!Array.isArray(tags)) continue;
+        for (const tag of tags) {
+          if (tag.startsWith("[[")) {
+            linkSet.add(tag.replace(/^\[\[|\]\]$/g, ""));
+          } else {
+            tagSet.add(tag.startsWith("#") ? tag : "#" + tag);
+          }
+        }
+      }
     }
     this.allTags = Array.from(tagSet).sort();
     this.allLinks = Array.from(linkSet).sort();
