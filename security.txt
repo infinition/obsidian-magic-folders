@@ -1,4 +1,4 @@
 Contact: https://github.com/infinition/obsidian-magic-folders/issues
-Expires: 2027-02-19T05:24:32.000Z
+Expires: 2027-02-20T05:19:00.000Z
 Preferred-Languages: en, fr
 Policy: https://github.com/infinition/obsidian-magic-folders/blob/wiki/SECURITY.md
