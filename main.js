@@ -1221,7 +1221,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
 			}
 			.magic-folder-item .nav-folder-title {
 				border-left: 3px solid var(--magic-folder-color-bg, var(--text-accent));
-				padding-left: 6px !important;
+				margin-left: -3px;
 				/* Default color-mix logic for light theme */
 				background: linear-gradient(90deg, 
 					color-mix(in srgb, var(--magic-folder-color-bg, var(--text-accent)) 15%, transparent) 0%,
@@ -1782,6 +1782,9 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     titleEl.className = "tree-item-self is-clickable nav-folder-title";
     const magicIcon = document.createElement("span");
     magicIcon.className = "magic-folder-icon";
+    if (magicFolder.hideIcon || magicFolder.customIconSize === 0) {
+      magicIcon.style.setProperty("display", "none", "important");
+    }
     const offsetX = magicFolder.customIconOffsetX || 0;
     const offsetY = magicFolder.customIconOffsetY || 0;
     const size = magicFolder.customIconSize || 28;
@@ -1875,6 +1878,9 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     titleEl.appendChild(collapseIcon);
     const magicIcon = document.createElement("span");
     magicIcon.className = "magic-folder-icon";
+    if (magicFolder.hideIcon || magicFolder.customIconSize === 0) {
+      magicIcon.style.setProperty("display", "none", "important");
+    }
     const offsetX = magicFolder.customIconOffsetX || 0;
     const offsetY = magicFolder.customIconOffsetY || 0;
     const size = magicFolder.customIconSize || 28;
@@ -2092,6 +2098,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     await this.saveSettings();
   }
   async renderAllMagicFolders() {
+    var _a2;
     var _a, _b, _c;
     if (this.isRendering) return;
     this.isRendering = true;
@@ -2138,7 +2145,28 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
           }
         }
         const folderEl = this.createMagicFolderDOM(magicFolder, filesWithFilters);
-        containerEl.insertBefore(folderEl, containerEl.firstChild);
+        let inserted = false;
+        if (magicFolder.placementTarget) {
+          try {
+            const escapedPath = CSS.escape(magicFolder.placementTarget);
+            const targetEl = (_a2 = containerEl.querySelector(`[data-path="${escapedPath}"]`)) == null ? void 0 : _a2.closest(".tree-item");
+            if (targetEl && targetEl.parentElement === containerEl) {
+              if (magicFolder.placementRelative === "after" && targetEl.nextSibling) {
+                containerEl.insertBefore(folderEl, targetEl.nextSibling);
+              } else if (magicFolder.placementRelative === "before") {
+                containerEl.insertBefore(folderEl, targetEl);
+              } else {
+                containerEl.appendChild(folderEl);
+              }
+              inserted = true;
+            }
+          } catch (e) {
+            console.warn("Magic Folders: placementTarget querySelector failed", e);
+          }
+        }
+        if (!inserted) {
+          containerEl.insertBefore(folderEl, containerEl.firstChild);
+        }
         elements.push(folderEl);
         this.updateUnreadBadgeInDom(magicFolder.id);
       }
@@ -2243,7 +2271,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
       }
     }
     if ((_a = cache.frontmatter) == null ? void 0 : _a.tags) {
-      const fmTags = Array.isArray(cache.frontmatter.tags) ? cache.frontmatter.tags : [cache.frontmatter.tags];
+      const fmTags = Array.isArray(cache.frontmatter.tags) ? Array.isArray(cache.frontmatter.tags) ? cache.frontmatter.tags : [cache.frontmatter.tags] : [cache.frontmatter.tags];
       for (const tag of fmTags) {
         const normalizedTag = String(tag).replace(/^#/, "").toLowerCase();
         if (normalizedTag === normalizedSearch || normalizedTag.startsWith(normalizedSearch + "/")) {
@@ -2959,7 +2987,11 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
   createMagicFolderDOM(magicFolder, filesWithFilters) {
     const folderEl = document.createElement("div");
     folderEl.className = "tree-item nav-folder magic-folder-item";
-    this.setMagicColorVars(folderEl, magicFolder.color);
+    if (magicFolder.useDefaultColor) {
+      folderEl.addClass("magic-folder-default-color");
+    } else {
+      this.setMagicColorVars(folderEl, magicFolder.color);
+    }
     folderEl.setAttribute("data-magic-folder-id", magicFolder.id);
     if (magicFolder.collapsed) {
       folderEl.addClass("is-collapsed");
@@ -2973,6 +3005,9 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
     titleEl.appendChild(collapseIcon);
     const magicIcon = document.createElement("span");
     magicIcon.className = "magic-folder-icon";
+    if (magicFolder.hideIcon || magicFolder.customIconSize === 0) {
+      magicIcon.style.setProperty("display", "none", "important");
+    }
     const offsetX = magicFolder.customIconOffsetX || 0;
     const offsetY = magicFolder.customIconOffsetY || 0;
     const size = magicFolder.customIconSize || 28;
@@ -3299,7 +3334,7 @@ var MagicFoldersPlugin = class extends import_obsidian.Plugin {
 };
 var MagicFolderModal = class extends import_obsidian.Modal {
   constructor(app, plugin, existingFolder) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
     super(app);
     this.domEventCleanup = [];
     this.plugin = plugin;
@@ -3313,8 +3348,13 @@ var MagicFolderModal = class extends import_obsidian.Modal {
       customIconOffsetY: (_b = existingFolder.customIconOffsetY) != null ? _b : 0,
       customIconSize: (_c = existingFolder.customIconSize) != null ? _c : 28,
       hideCustomIconName: nameHidden,
-      hideName: nameHidden
+      hideName: nameHidden,
       // Synchronisation forcÃ©e
+      hideIcon: (_d = existingFolder.hideIcon) != null ? _d : false,
+      // Add this line
+      useDefaultColor: (_e = existingFolder.useDefaultColor) != null ? _e : false,
+      placementTarget: existingFolder.placementTarget,
+      placementRelative: existingFolder.placementRelative
     } : {
       id: this.generateId(),
       name: this.plugin.t("modal_default_name"),
@@ -3328,7 +3368,11 @@ var MagicFolderModal = class extends import_obsidian.Modal {
       customIconOffsetY: 0,
       customIconSize: 28,
       hideCustomIconName: false,
-      hideName: false
+      hideName: false,
+      hideIcon: false,
+      useDefaultColor: false,
+      placementTarget: void 0,
+      placementRelative: void 0
     };
     this.domEventCleanup = [];
   }
@@ -3367,10 +3411,55 @@ var MagicFolderModal = class extends import_obsidian.Modal {
         }
       });
     });
+    new import_obsidian.Setting(contentEl).setName("Hide icon").setDesc("Do not display any icon for this Magic Folder.").addToggle((toggle) => {
+      toggle.setValue(!!this.folder.hideIcon).onChange((value) => {
+        this.folder.hideIcon = value;
+        const folderEl = document.querySelector(`[data-magic-folder-id="${this.folder.id}"]`);
+        if (folderEl) {
+          const iconWrap = folderEl.querySelector(".magic-folder-icon");
+          if (iconWrap) {
+            if (value || this.folder.customIconSize === 0) {
+              iconWrap.style.setProperty("display", "none", "important");
+            } else {
+              iconWrap.style.removeProperty("display");
+            }
+          }
+        }
+        if (!this.isNew) {
+          const liveFolder = this.plugin.settings.magicFolders.find((f) => f.id === this.folder.id);
+          if (liveFolder) liveFolder.hideIcon = value;
+        }
+      });
+    });
     const colorSetting = new import_obsidian.Setting(contentEl).setName(t("modal_color_label")).setDesc(t("modal_color_desc"));
     const colorContainer = colorSetting.controlEl.createDiv("color-picker-container");
-    const colorInput = colorSetting.controlEl.createEl("input", { type: "color" });
+    const colorInput = colorContainer.createEl("input", { type: "color" });
     colorInput.className = "magic-folder-color-input";
+    const noColorBtn = colorContainer.createEl("button", { text: "\u2715", title: "Use default Obsidian styling" });
+    noColorBtn.style.marginLeft = "8px";
+    noColorBtn.style.padding = "4px 8px";
+    noColorBtn.style.cursor = "pointer";
+    const updateColorUI = () => {
+      if (this.folder.useDefaultColor) {
+        colorInput.style.opacity = "0.5";
+        noColorBtn.style.backgroundColor = "var(--interactive-accent)";
+        noColorBtn.style.color = "var(--text-on-accent)";
+      } else {
+        colorInput.style.opacity = "1";
+        noColorBtn.style.backgroundColor = "";
+        noColorBtn.style.color = "";
+      }
+    };
+    updateColorUI();
+    noColorBtn.addEventListener("click", () => {
+      this.folder.useDefaultColor = true;
+      updateColorUI();
+      if (!this.isNew) {
+        const liveFolder = this.plugin.settings.magicFolders.find((f) => f.id === this.folder.id);
+        if (liveFolder) liveFolder.useDefaultColor = true;
+        this.plugin.renderAllMagicFolders();
+      }
+    });
     const parseColor = (value) => {
       if (!value) return { hex: "#9b59b6", alpha: 100 };
       const rgba = value.replace(/\s+/g, "").match(/^rgba?\((\d+),(\d+),(\d+)(?:,([0-9.]+))?\)$/i);
@@ -3390,7 +3479,17 @@ var MagicFolderModal = class extends import_obsidian.Modal {
       const a = Math.min(100, Math.max(0, alpha));
       const newColor = a === 100 ? hex : `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${a / 100})`;
       this.folder.color = newColor;
-      if (!this.isNew) this.plugin.updateColorInDom(this.folder.id, newColor);
+      this.folder.useDefaultColor = false;
+      updateColorUI();
+      if (!this.isNew) {
+        const liveFolder = this.plugin.settings.magicFolders.find((f) => f.id === this.folder.id);
+        if (liveFolder) {
+          liveFolder.color = newColor;
+          liveFolder.useDefaultColor = false;
+        }
+        this.plugin.updateColorInDom(this.folder.id, newColor);
+        this.plugin.renderAllMagicFolders();
+      }
     };
     const initial = parseColor(this.folder.color);
     colorInput.value = initial.hex;
@@ -3818,7 +3917,7 @@ var MagicFolderModal = class extends import_obsidian.Modal {
     const adjustRow = iconAdjustWrap.createDiv({ cls: "magic-custom-icon-preview-row" });
     const sizeWrap = adjustRow.createDiv({ cls: "magic-custom-icon-size" });
     sizeWrap.createSpan({ text: "Size:" });
-    customIconSlider = sizeWrap.createEl("input", { type: "range", min: "10", max: "64", step: "2" });
+    customIconSlider = sizeWrap.createEl("input", { type: "range", min: "0", max: "64", step: "2" });
     const currentSize = (_a = this.folder.customIconSize) != null ? _a : 28;
     customIconSlider.value = String(currentSize);
     customIconSizeValue = sizeWrap.createEl("span", { text: `${currentSize}px` });
@@ -3856,6 +3955,17 @@ var MagicFolderModal = class extends import_obsidian.Modal {
           liveFolder.customIconOffsetY = y;
         }
         this.plugin.updateIconStyleInDom(this.folder.id, s, x, y);
+        const folderEl = document.querySelector(`[data-magic-folder-id="${this.folder.id}"]`);
+        if (folderEl) {
+          const iconWrap = folderEl.querySelector(".magic-folder-icon");
+          if (iconWrap) {
+            if (this.folder.hideIcon || s === 0) {
+              iconWrap.style.setProperty("display", "none", "important");
+            } else {
+              iconWrap.style.removeProperty("display");
+            }
+          }
+        }
       }
       if (customIconPreview) {
         customIconPreview.style.width = this.folder.customIconKeepRatio ? "auto" : `${s}px`;

@@ -38,7 +38,8 @@ interface MagicFolder {
 	customIconOffsetX?: number;
 	customIconOffsetY?: number;
 	hideCustomIconName?: boolean;
-	hideName?: boolean;
+	hideIcon?: boolean;
+	useDefaultColor?: boolean;
 	lastOpenedCount?: number;
 	lastOpenedFilePaths?: string[];
 	unreadFilePaths?: string[];
@@ -700,8 +701,8 @@ class MagicFoldersSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.showNewItemsBadge = value;
 						await this.plugin.saveSettings();
-					this.plugin.renderAllMagicFolders();
-				});
+						this.plugin.renderAllMagicFolders();
+					});
 			});
 
 		new Setting(containerEl)
@@ -1337,7 +1338,7 @@ export default class MagicFoldersPlugin extends Plugin {
 			}
 			.magic-folder-item .nav-folder-title {
 				border-left: 3px solid var(--magic-folder-color-bg, var(--text-accent));
-				padding-left: 6px !important;
+				margin-left: -3px;
 				/* Default color-mix logic for light theme */
 				background: linear-gradient(90deg, 
 					color-mix(in srgb, var(--magic-folder-color-bg, var(--text-accent)) 15%, transparent) 0%,
@@ -1918,7 +1919,10 @@ export default class MagicFoldersPlugin extends Plugin {
 		titleEl.className = "tree-item-self is-clickable nav-folder-title";
 		const magicIcon = document.createElement("span");
 		magicIcon.className = "magic-folder-icon";
-		
+		if (magicFolder.hideIcon || magicFolder.customIconSize === 0) {
+			magicIcon.style.setProperty("display", "none", "important");
+		}
+
 		const offsetX = magicFolder.customIconOffsetX || 0;
 		const offsetY = magicFolder.customIconOffsetY || 0;
 		const size = magicFolder.customIconSize || 28;
@@ -2015,7 +2019,10 @@ export default class MagicFoldersPlugin extends Plugin {
 		titleEl.appendChild(collapseIcon);
 		const magicIcon = document.createElement("span");
 		magicIcon.className = "magic-folder-icon";
-		
+		if (magicFolder.hideIcon || magicFolder.customIconSize === 0) {
+			magicIcon.style.setProperty("display", "none", "important");
+		}
+
 		const offsetX = magicFolder.customIconOffsetX || 0;
 		const offsetY = magicFolder.customIconOffsetY || 0;
 		const size = magicFolder.customIconSize || 28;
@@ -2081,7 +2088,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		} else {
 			titleContent.style.removeProperty("display");
 		}
-		
+
 		if (this.settings.showFileCount) {
 			const countBadge = document.createElement("span");
 			countBadge.className = "magic-file-count";
@@ -2287,7 +2294,31 @@ export default class MagicFoldersPlugin extends Plugin {
 					}
 				}
 				const folderEl = this.createMagicFolderDOM(magicFolder, filesWithFilters);
-				containerEl.insertBefore(folderEl, containerEl.firstChild);
+
+				let inserted = false;
+				if (magicFolder.placementTarget) {
+					try {
+						const escapedPath = CSS.escape(magicFolder.placementTarget);
+						const targetEl = containerEl.querySelector(`[data-path="${escapedPath}"]`)?.closest('.tree-item');
+						if (targetEl && targetEl.parentElement === containerEl) {
+							if (magicFolder.placementRelative === "after" && targetEl.nextSibling) {
+								containerEl.insertBefore(folderEl, targetEl.nextSibling);
+							} else if (magicFolder.placementRelative === "before") {
+								containerEl.insertBefore(folderEl, targetEl);
+							} else {
+								containerEl.appendChild(folderEl);
+							}
+							inserted = true;
+						}
+					} catch (e) {
+						console.warn("Magic Folders: placementTarget querySelector failed", e);
+					}
+				}
+
+				if (!inserted) {
+					containerEl.insertBefore(folderEl, containerEl.firstChild);
+				}
+
 				elements.push(folderEl);
 				this.updateUnreadBadgeInDom(magicFolder.id);
 			}
@@ -2394,7 +2425,7 @@ export default class MagicFoldersPlugin extends Plugin {
 			}
 		}
 		if ((_a = cache.frontmatter) == null ? void 0 : _a.tags) {
-			const fmTags = Array.isArray(cache.frontmatter.tags) ? cache.frontmatter.tags : [cache.frontmatter.tags];
+			const fmTags = Array.isArray(cache.frontmatter.tags) ? Array.isArray(cache.frontmatter.tags) ? cache.frontmatter.tags : [cache.frontmatter.tags] : [cache.frontmatter.tags];
 			for (const tag of fmTags) {
 				const normalizedTag = String(tag).replace(/^#/, "").toLowerCase();
 				if (normalizedTag === normalizedSearch || normalizedTag.startsWith(normalizedSearch + "/")) {
@@ -2722,7 +2753,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		badge.textContent = String(unreadCount);
 		badge.removeClass("is-hidden");
 	}
-	
+
 	// --- NOUVELLES METHODES DE MISE A JOUR TEMPS REEL ---
 
 	updateFolderNameInDom(folderId, newName) {
@@ -2758,17 +2789,17 @@ export default class MagicFoldersPlugin extends Plugin {
 		// Clear content
 		iconWrap.innerHTML = "";
 		iconWrap.style.transform = ""; // Reset wrapper transform
-		
+
 		if (type === 'custom') {
-				const img = document.createElement("img");
-				img.className = "magic-folder-custom-icon";
-				img.src = value;
-				iconWrap.appendChild(img);
+			const img = document.createElement("img");
+			img.className = "magic-folder-custom-icon";
+			img.src = value;
+			iconWrap.appendChild(img);
 		} else if (type === 'emoji') {
-				iconWrap.textContent = value;
+			iconWrap.textContent = value;
 		} else {
-				// Standard Icon
-				setIcon(iconWrap, value);
+			// Standard Icon
+			setIcon(iconWrap, value);
 		}
 	}
 
@@ -2781,21 +2812,21 @@ export default class MagicFoldersPlugin extends Plugin {
 		// Check what's inside
 		const img = iconWrap.querySelector("img.magic-folder-custom-icon");
 		const svg = iconWrap.querySelector("svg");
-		
+
 		if (img) {
-			 img.style.height = `${size}px`;
-			 // Width handled by aspect ratio toggle usually, but here we just ensure height is applied
-			 img.style.transform = `translate(${x}px, ${y}px)`;
+			img.style.height = `${size}px`;
+			// Width handled by aspect ratio toggle usually, but here we just ensure height is applied
+			img.style.transform = `translate(${x}px, ${y}px)`;
 		} else if (svg) {
-			 // SVG Icon
-			 svg.style.width = `${size}px`;
-			 svg.style.height = `${size}px`;
-			 svg.style.transform = `translate(${x}px, ${y}px)`;
+			// SVG Icon
+			svg.style.width = `${size}px`;
+			svg.style.height = `${size}px`;
+			svg.style.transform = `translate(${x}px, ${y}px)`;
 		} else {
-			 // Emoji / Text
-			 iconWrap.style.fontSize = `${size}px`;
-			 iconWrap.style.display = "inline-block"; 
-			 iconWrap.style.transform = `translate(${x}px, ${y}px)`;
+			// Emoji / Text
+			iconWrap.style.fontSize = `${size}px`;
+			iconWrap.style.display = "inline-block";
+			iconWrap.style.transform = `translate(${x}px, ${y}px)`;
 		}
 	}
 
@@ -3136,7 +3167,11 @@ export default class MagicFoldersPlugin extends Plugin {
 	createMagicFolderDOM(magicFolder, filesWithFilters) {
 		const folderEl = document.createElement("div");
 		folderEl.className = "tree-item nav-folder magic-folder-item";
-		this.setMagicColorVars(folderEl, magicFolder.color);
+		if (magicFolder.useDefaultColor) {
+			folderEl.addClass("magic-folder-default-color");
+		} else {
+			this.setMagicColorVars(folderEl, magicFolder.color);
+		}
 		folderEl.setAttribute("data-magic-folder-id", magicFolder.id);
 		if (magicFolder.collapsed) {
 			folderEl.addClass("is-collapsed");
@@ -3150,7 +3185,10 @@ export default class MagicFoldersPlugin extends Plugin {
 		titleEl.appendChild(collapseIcon);
 		const magicIcon = document.createElement("span");
 		magicIcon.className = "magic-folder-icon";
-		
+		if (magicFolder.hideIcon || magicFolder.customIconSize === 0) {
+			magicIcon.style.setProperty("display", "none", "important");
+		}
+
 		const offsetX = magicFolder.customIconOffsetX || 0;
 		const offsetY = magicFolder.customIconOffsetY || 0;
 		const size = magicFolder.customIconSize || 28;
@@ -3212,7 +3250,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		titleContent.className = "tree-item-inner nav-folder-title-content";
 		titleContent.textContent = magicFolder.name;
 		titleEl.appendChild(titleContent);
-		
+
 		if (this.settings.showFileCount) {
 			const countBadge = document.createElement("span");
 			countBadge.className = "magic-file-count";
@@ -3230,7 +3268,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		}
 		titleEl.appendChild(newBadge);
 		folderEl.appendChild(titleEl);
-		
+
 		// --- Correction CSS pour Hide Name ---
 		if (magicFolder.hideName) {
 			folderEl.addClass("magic-folder-icon-only");
@@ -3238,7 +3276,7 @@ export default class MagicFoldersPlugin extends Plugin {
 		} else {
 			titleContent.style.removeProperty("display");
 		}
-		
+
 		this.setupDragAndDrop(folderEl, titleEl, magicFolder);
 		const childrenEl = document.createElement("div");
 		childrenEl.className = "tree-item-children nav-folder-children";
@@ -3497,14 +3535,14 @@ export default class MagicFoldersPlugin extends Plugin {
 
 class MagicFolderModal extends Modal {
 	domEventCleanup = [];
-	
+
 	constructor(app, plugin, existingFolder) {
 		super(app);
 		this.plugin = plugin;
 		this.isNew = !existingFolder;
-		
+
 		// Initialisation de l'objet folder
-		const nameHidden = existingFolder 
+		const nameHidden = existingFolder
 			? (existingFolder.hideName !== undefined ? existingFolder.hideName : (existingFolder.hideCustomIconName || false))
 			: false;
 
@@ -3516,7 +3554,11 @@ class MagicFolderModal extends Modal {
 			customIconOffsetY: existingFolder.customIconOffsetY ?? 0,
 			customIconSize: existingFolder.customIconSize ?? 28,
 			hideCustomIconName: nameHidden,
-			hideName: nameHidden // Synchronisation forcÃ©e
+			hideName: nameHidden, // Synchronisation forcÃ©e
+			hideIcon: existingFolder.hideIcon ?? false, // Add this line
+			useDefaultColor: existingFolder.useDefaultColor ?? false,
+			placementTarget: existingFolder.placementTarget,
+			placementRelative: existingFolder.placementRelative,
 		} : {
 			id: this.generateId(),
 			name: this.plugin.t('modal_default_name'),
@@ -3530,7 +3572,11 @@ class MagicFolderModal extends Modal {
 			customIconOffsetY: 0,
 			customIconSize: 28,
 			hideCustomIconName: false,
-			hideName: false
+			hideName: false,
+			hideIcon: false,
+			useDefaultColor: false,
+			placementTarget: undefined,
+			placementRelative: undefined
 		};
 		this.domEventCleanup = [];
 	}
@@ -3544,14 +3590,14 @@ class MagicFolderModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass("magic-folder-modal");
 		this.modalEl.addClass("magic-folder-modal");
-		
+
 		if (!this.isNew) {
 			document.body.classList.add("magic-folder-edit-modal-open");
 		}
-		
+
 		const t = this.plugin.t.bind(this.plugin);
 		contentEl.createEl("h2", { text: this.isNew ? t('modal_create_title') : t('modal_edit_title') });
-		
+
 		let emojiGrid = null;
 
 		// --- NAME ---
@@ -3567,8 +3613,8 @@ class MagicFolderModal extends Modal {
 			toggle.setValue(!!this.folder.hideName).onChange((value) => {
 				this.folder.hideName = value;
 				this.folder.hideCustomIconName = value; // Sync old prop too
-				
-				// Mise Ã  jour visuelle LIVE (sans sauvegarde disque)
+
+				// Mise à jour visuelle LIVE (sans sauvegarde disque)
 				this.plugin.updateHideNameInDom(this.folder.id, value);
 				if (!this.isNew) {
 					const liveFolder = this.plugin.settings.magicFolders.find((f) => f.id === this.folder.id);
@@ -3580,12 +3626,63 @@ class MagicFolderModal extends Modal {
 			});
 		});
 
+		// --- HIDE ICON ---
+		new Setting(contentEl).setName("Hide icon").setDesc("Do not display any icon for this Magic Folder.").addToggle((toggle) => {
+			toggle.setValue(!!this.folder.hideIcon).onChange((value) => {
+				this.folder.hideIcon = value;
+				const folderEl = document.querySelector(`[data-magic-folder-id="${this.folder.id}"]`);
+				if (folderEl) {
+					const iconWrap = folderEl.querySelector(".magic-folder-icon") as HTMLElement;
+					if (iconWrap) {
+						if (value || this.folder.customIconSize === 0) {
+							iconWrap.style.setProperty("display", "none", "important");
+						} else {
+							iconWrap.style.removeProperty("display");
+						}
+					}
+				}
+				if (!this.isNew) {
+					const liveFolder = this.plugin.settings.magicFolders.find((f) => f.id === this.folder.id);
+					if (liveFolder) liveFolder.hideIcon = value;
+				}
+			});
+		});
+
 		// --- COLOR ---
 		const colorSetting = new Setting(contentEl).setName(t('modal_color_label')).setDesc(t('modal_color_desc'));
 		const colorContainer = colorSetting.controlEl.createDiv("color-picker-container");
-		const colorInput = colorSetting.controlEl.createEl("input", { type: "color" });
+		const colorInput = colorContainer.createEl("input", { type: "color" });
 		colorInput.className = "magic-folder-color-input";
-		
+
+		const noColorBtn = colorContainer.createEl("button", { text: "✕", title: "Use default Obsidian styling" });
+		noColorBtn.style.marginLeft = "8px";
+		noColorBtn.style.padding = "4px 8px";
+		noColorBtn.style.cursor = "pointer";
+
+		const updateColorUI = () => {
+			if (this.folder.useDefaultColor) {
+				colorInput.style.opacity = "0.5";
+				noColorBtn.style.backgroundColor = "var(--interactive-accent)";
+				noColorBtn.style.color = "var(--text-on-accent)";
+			} else {
+				colorInput.style.opacity = "1";
+				noColorBtn.style.backgroundColor = "";
+				noColorBtn.style.color = "";
+			}
+		};
+		updateColorUI();
+
+		noColorBtn.addEventListener("click", () => {
+			this.folder.useDefaultColor = true;
+			updateColorUI();
+
+			if (!this.isNew) {
+				const liveFolder = this.plugin.settings.magicFolders.find((f: any) => f.id === this.folder.id);
+				if (liveFolder) liveFolder.useDefaultColor = true;
+				this.plugin.renderAllMagicFolders();
+			}
+		});
+
 		const parseColor = (value) => {
 			if (!value) return { hex: "#9b59b6", alpha: 100 };
 			const rgba = value.replace(/\s+/g, "").match(/^rgba?\((\d+),(\d+),(\d+)(?:,([0-9.]+))?\)$/i);
@@ -3606,7 +3703,18 @@ class MagicFolderModal extends Modal {
 			const a = Math.min(100, Math.max(0, alpha));
 			const newColor = a === 100 ? hex : `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${a / 100})`;
 			this.folder.color = newColor;
-			if (!this.isNew) this.plugin.updateColorInDom(this.folder.id, newColor);
+			this.folder.useDefaultColor = false;
+			updateColorUI();
+
+			if (!this.isNew) {
+				const liveFolder = this.plugin.settings.magicFolders.find((f: any) => f.id === this.folder.id);
+				if (liveFolder) {
+					liveFolder.color = newColor;
+					liveFolder.useDefaultColor = false;
+				}
+				this.plugin.updateColorInDom(this.folder.id, newColor);
+				this.plugin.renderAllMagicFolders();
+			}
 		};
 
 		const initial = parseColor(this.folder.color);
@@ -3669,7 +3777,7 @@ class MagicFolderModal extends Modal {
 				if (emojiGrid) {
 					emojiGrid.querySelectorAll(".emoji-btn").forEach((btn) => btn.classList.remove("selected"));
 				}
-				
+
 				// Live Update Icon Type
 				if (!this.isNew) this.plugin.updateIconTypeInDom(this.folder.id, 'icon', icon);
 				// Force styling update
@@ -3681,11 +3789,11 @@ class MagicFolderModal extends Modal {
 		const emojiList = [
 			"\u{1F600}", "\u{1F603}", "\u{1F604}", "\u{1F601}", "\u{1F606}", "\u{1F605}", "\u{1F602}", "\u{1F923}", "\u{1F60A}", "\u{1F607}", "\u{1F642}", "\u{1F643}", "\u{1F609}", "\u{1F60C}", "\u{1F60D}", "\u{1F970}", "\u{1F618}", "\u{1F617}", "\u{1F619}", "\u{1F61A}", "\u{1F60B}", "\u{1F61C}", "\u{1F61D}", "\u{1F61B}", "\u{1F911}", "\u{1F917}", "\u{1F92D}", "\u{1F92B}", "\u{1F914}", "\u{1F910}", "\u{1F928}", "\u{1F610}", "\u{1F611}", "\u{1F636}", "\u{1F60F}", "\u{1F612}", "\u{1F644}", "\u{1F62C}", "\u{1F925}", "\u{1F614}", "\u{1F62A}", "\u{1F924}", "\u{1F634}", "\u{1F637}", "\u{1F912}", "\u{1F915}", "\u{1F922}", "\u{1F92E}", "\u{1F927}", "\u{1F975}", "\u{1F976}", "\u{1F974}", "\u{1F635}", "\u{1F92F}", "\u{1F920}", "\u{1F973}", "\u{1F60E}", "\u{1F913}", "\u{1F9D0}", "\u{1F615}", "\u{1F61F}", "\u{1F641}", "\u2639\uFE0F", "\u{1F62E}", "\u{1F62F}", "\u{1F632}", "\u{1F633}", "\u{1F97A}", "\u{1F626}", "\u{1F627}", "\u{1F628}", "\u{1F630}", "\u{1F625}", "\u{1F622}", "\u{1F62D}", "\u{1F631}", "\u{1F616}", "\u{1F623}", "\u{1F61E}", "\u{1F613}", "\u{1F629}", "\u{1F62B}", "\u{1F971}", "\u{1F624}", "\u{1F621}", "\u{1F620}", "\u{1F92C}", "\u{1F608}", "\u{1F47F}", "\u{1F480}", "\u2620\uFE0F", "\u{1F921}", "\u{1F479}", "\u{1F47A}", "\u{1F47B}", "\u{1F47D}", "\u{1F47E}", "\u{1F916}", "\u{1F63A}", "\u{1F638}", "\u{1F639}", "\u{1F63B}", "\u{1F63C}", "\u{1F63D}", "\u{1F640}", "\u{1F63F}", "\u{1F63E}", "\u{1F44D}", "\u{1F44E}", "\u{1F44F}", "\u{1F64C}", "\u{1F450}", "\u{1F91D}", "\u{1F44A}", "\u270A", "\u{1F91B}", "\u{1F91C}", "\u{1F44C}", "\u{1F90C}", "\u{1F90F}", "\u270C\uFE0F", "\u{1F91E}", "\u{1F91F}", "\u{1F918}", "\u{1F44C}", "\u{1F590}\uFE0F", "\u270B", "\u{1F91A}", "\u{1F44B}", "\u{1F919}", "\u{1F4AA}", "\u{1F9BE}", "\u{1F9E0}", "\u{1F9B4}", "\u{1F9B7}", "\u{1F440}", "\u{1F441}\uFE0F", "\u{1F445}", "\u{1F444}", "\u{1FAF6}", "\u{1FAF0}", "\u{1F64F}", "\u{1F485}", "\u{1F933}", "\u{1F525}", "\u2728", "\u{1F31F}", "\u{1F4AB}", "\u26A1", "\u{1F4A5}", "\u{1F4AF}", "\u{1F48E}", "\u{1F3AF}", "\u{1F3C6}", "\u{1F947}", "\u{1F948}", "\u{1F949}", "\u{1F396}\uFE0F", "\u{1F3C5}", "\u{1F4CC}", "\u{1F4CD}", "\u{1F9ED}", "\u{1F5FA}\uFE0F", "\u{1F3D4}\uFE0F", "\u{1F3D5}\uFE0F", "\u{1F3D6}\uFE0F", "\u{1F3DC}\uFE0F", "\u{1F3DD}\uFE0F", "\u{1F3DE}\uFE0F", "\u{1F30B}", "\u{1F5FB}", "\u{1F308}", "\u2600\uFE0F", "\u{1F324}\uFE0F", "\u26C5", "\u{1F325}\uFE0F", "\u{1F326}\uFE0F", "\u{1F327}\uFE0F", "\u26C8\uFE0F", "\u{1F329}\uFE0F", "\u2744\uFE0F", "\u{1F32A}\uFE0F", "\u{1F32B}\uFE0F", "\u{1F4A8}", "\u{1F4A7}", "\u{1F30A}", "\u{1F338}", "\u{1F33A}", "\u{1F33C}", "\u{1F33B}", "\u{1F337}", "\u{1F339}", "\u{1F33F}", "\u2618\uFE0F", "\u{1F340}", "\u{1F332}", "\u{1F333}", "\u{1F335}", "\u{1F38B}", "\u{1F334}", "\u{1F341}", "\u{1F342}", "\u{1F34E}", "\u{1F34C}", "\u{1F349}", "\u{1F347}", "\u{1F353}", "\u{1FAD0}", "\u{1F34D}", "\u{1F96D}", "\u{1F95D}", "\u{1F351}", "\u{1F352}", "\u{1F34B}", "\u{1F34A}", "\u{1F348}", "\u{1F965}", "\u{1F951}", "\u{1F966}", "\u{1F955}", "\u{1F33D}", "\u{1F355}", "\u{1F354}", "\u{1F35F}", "\u{1F32D}", "\u{1F37F}", "\u{1F96A}", "\u{1F32E}", "\u{1F32F}", "\u{1F957}", "\u{1F35D}", "\u{1F35C}", "\u{1F363}", "\u{1F371}", "\u{1F35B}", "\u{1F370}", "\u{1F9C1}", "\u{1F36A}", "\u{1F369}", "\u{1F366}", "\u{1F36B}", "\u2699\uFE0F", "\u{1F9E9}", "\u{1F9EA}", "\u{1F9EC}", "\u{1F52C}", "\u{1F52D}", "\u{1F4A1}", "\u{1F526}", "\u{1F56F}\uFE0F", "\u{1F4D6}", "\u{1F4DA}", "\u{1F4C2}", "\u{1F4C1}", "\u{1F4C4}", "\u{1F4DD}", "\u270F\uFE0F", "\u{1F58A}\uFE0F", "\u{1F58B}\uFE0F", "\u{1F9F7}", "\u{1F4CE}", "\u{1F5C2}\uFE0F", "\u{1F4CA}", "\u{1F4C8}", "\u{1F4C9}", "\u{1F4C5}", "\u{1F4C6}", "\u23F0", "\u23F1\uFE0F", "\u23F2\uFE0F", "\u{1F570}\uFE0F", "\u231B", "\u23F3", "\u{1F3A7}", "\u{1F3B8}", "\u{1F3B9}", "\u{1F941}", "\u{1F3BA}", "\u{1F3B7}", "\u{1F3BB}", "\u{1F3BC}", "\u{1F3AC}", "\u{1F3AE}", "\u{1F579}\uFE0F", "\u{1F3B2}", "\u{1F680}", "\u{1F6F8}", "\u{1F6F0}\uFE0F", "\u2708\uFE0F", "\u{1F6EB}", "\u{1F6EC}", "\u{1F697}", "\u{1F695}", "\u{1F699}", "\u{1F68C}", "\u{1F68E}", "\u{1F693}", "\u{1F691}", "\u{1F692}", "\u{1F69A}", "\u{1F69B}", "\u{1F6B2}", "\u{1F6F4}", "\u{1F3CD}\uFE0F", "\u{1F3E0}", "\u{1F3E1}", "\u{1F3E2}", "\u{1F3EC}", "\u{1F3ED}", "\u{1F3F0}", "\u{1F3EF}", "\u{1F5FC}", "\u{1F5FD}", "\u26E9\uFE0F", "\u{1F54C}", "\u{1F54D}", "\u26EA", "\u{1F54B}", "\u2764\uFE0F", "\u{1F9E1}", "\u{1F49B}", "\u{1F49A}", "\u{1F499}", "\u{1F49C}", "\u{1F5A4}", "\u{1F90D}", "\u{1F90E}", "\u{1F496}", "\u{1F498}", "\u{1F49D}", "\u{1F48C}", "\u{1F495}", "\u{1F49E}", "\u{1F493}", "\u{1F497}", "\u{1F49F}"
 		];
-		
+
 		const emojiSetting = new Setting(contentEl).setName(t('modal_emoji_label')).setDesc(t('modal_emoji_desc'));
 		const emojiContainer = emojiSetting.controlEl.createDiv({ cls: "emoji-picker-container" });
 		emojiGrid = emojiContainer.createDiv({ cls: "emoji-grid" });
-		
+
 		const renderEmojis = (filter) => {
 			emojiGrid.empty();
 			const folder = this.folder;
@@ -3700,7 +3808,7 @@ class MagicFolderModal extends Modal {
 					clearCustomIconSelection();
 					Array.from(emojiGrid.children).forEach((child) => child.classList.remove("selected"));
 					btn.classList.add("selected");
-					
+
 					// Live Update Emoji
 					if (!this.isNew) this.plugin.updateIconTypeInDom(this.folder.id, 'emoji', e);
 					// Force styling update
@@ -3715,18 +3823,18 @@ class MagicFolderModal extends Modal {
 		iconAdjustSetting.settingEl.addClass("magic-custom-icon-setting");
 		iconAdjustSetting.controlEl.addClass("magic-custom-icon-control");
 		const iconAdjustWrap = iconAdjustSetting.controlEl.createDiv({ cls: "magic-custom-icon-wrap" });
-		
+
 		// --- SLIDERS ROW ---
 		const adjustRow = iconAdjustWrap.createDiv({ cls: "magic-custom-icon-preview-row" });
-		
+
 		// Size Slider
 		const sizeWrap = adjustRow.createDiv({ cls: "magic-custom-icon-size" });
-		sizeWrap.createSpan({text: "Size:"});
-		customIconSlider = sizeWrap.createEl("input", { type: "range", min: "10", max: "64", step: "2" });
+		sizeWrap.createSpan({ text: "Size:" });
+		customIconSlider = sizeWrap.createEl("input", { type: "range", min: "0", max: "64", step: "2" });
 		const currentSize = this.folder.customIconSize ?? 28;
 		customIconSlider.value = String(currentSize);
 		customIconSizeValue = sizeWrap.createEl("span", { text: `${currentSize}px` });
-		
+
 		// Offset Container
 		const offsetContainer = iconAdjustWrap.createDiv();
 		offsetContainer.style.display = "flex";
@@ -3735,7 +3843,7 @@ class MagicFolderModal extends Modal {
 
 		// Y Offset
 		const yWrap = offsetContainer.createDiv({ cls: "magic-custom-icon-offset" });
-		yWrap.createSpan({text: "Y:"});
+		yWrap.createSpan({ text: "Y:" });
 		const yInput = yWrap.createEl("input", { type: "range", min: "-20", max: "20", step: "1" });
 		const currentY = this.folder.customIconOffsetY ?? 0;
 		yInput.value = String(currentY);
@@ -3743,7 +3851,7 @@ class MagicFolderModal extends Modal {
 
 		// X Offset
 		const xWrap = offsetContainer.createDiv({ cls: "magic-custom-icon-offset" });
-		xWrap.createSpan({text: "X:"});
+		xWrap.createSpan({ text: "X:" });
 		const xInput = xWrap.createEl("input", { type: "range", min: "-20", max: "20", step: "1" });
 		const currentX = this.folder.customIconOffsetX ?? 0;
 		xInput.value = String(currentX);
@@ -3754,11 +3862,11 @@ class MagicFolderModal extends Modal {
 			const s = Number(customIconSlider.value);
 			const x = Number(xInput.value);
 			const y = Number(yInput.value);
-			
+
 			this.folder.customIconSize = s;
 			this.folder.customIconOffsetX = x;
 			this.folder.customIconOffsetY = y;
-			
+
 			customIconSizeValue.textContent = `${s}px`;
 			xValue.textContent = String(x);
 			yValue.textContent = String(y);
@@ -3773,13 +3881,25 @@ class MagicFolderModal extends Modal {
 					liveFolder.customIconOffsetY = y;
 				}
 				this.plugin.updateIconStyleInDom(this.folder.id, s, x, y);
+
+				const folderEl = document.querySelector(`[data-magic-folder-id="${this.folder.id}"]`);
+				if (folderEl) {
+					const iconWrap = folderEl.querySelector(".magic-folder-icon") as HTMLElement;
+					if (iconWrap) {
+						if (this.folder.hideIcon || s === 0) {
+							iconWrap.style.setProperty("display", "none", "important");
+						} else {
+							iconWrap.style.removeProperty("display");
+						}
+					}
+				}
 			}
-			
+
 			// Update Modal Preview (only if it's a custom icon image visible)
 			if (customIconPreview) {
-				 customIconPreview.style.width = this.folder.customIconKeepRatio ? "auto" : `${s}px`;
-				 customIconPreview.style.height = `${s}px`;
-				 customIconPreview.style.transform = `translate(${x}px, ${y}px)`;
+				customIconPreview.style.width = this.folder.customIconKeepRatio ? "auto" : `${s}px`;
+				customIconPreview.style.height = `${s}px`;
+				customIconPreview.style.transform = `translate(${x}px, ${y}px)`;
 			}
 		};
 
@@ -3789,7 +3909,7 @@ class MagicFolderModal extends Modal {
 
 
 		// --- CUSTOM ICONS SELECTION (Below adjustments) ---
-		
+
 		// DEFINED HERE TO BE IN SCOPE
 		const applyCustomIcon = async (sourcePath) => {
 			const size = this.folder.customIconSize || 28;
@@ -3801,7 +3921,7 @@ class MagicFolderModal extends Modal {
 			clearIconSelection();
 			clearCustomIconSelection();
 			if (emojiGrid) emojiGrid.querySelectorAll(".emoji-btn").forEach((b) => b.classList.remove("selected"));
-			
+
 			// Update preview
 			if (customIconPreview) {
 				customIconPreview.src = saved.previewDataUrl;
@@ -3831,7 +3951,7 @@ class MagicFolderModal extends Modal {
 			customIconSetting.settingEl.addClass("magic-custom-icon-setting");
 			customIconSetting.controlEl.addClass("magic-custom-icon-control");
 			const customIconWrap = customIconSetting.controlEl.createDiv({ cls: "magic-custom-icon-wrap" });
-			
+
 			// Keep Ratio Checkbox (Specific to Images)
 			const ratioRow = customIconWrap.createDiv({ cls: "magic-custom-icon-preview-row" });
 			const ratioWrap = ratioRow.createDiv({ cls: "magic-custom-icon-ratio" });
@@ -3841,35 +3961,35 @@ class MagicFolderModal extends Modal {
 			ratioCheckbox.addEventListener("change", () => {
 				this.folder.customIconKeepRatio = ratioCheckbox.checked;
 				if (!this.isNew) {
-					 const liveFolder = this.plugin.settings.magicFolders.find((f) => f.id === this.folder.id);
-					 if (liveFolder) liveFolder.customIconKeepRatio = ratioCheckbox.checked;
+					const liveFolder = this.plugin.settings.magicFolders.find((f) => f.id === this.folder.id);
+					if (liveFolder) liveFolder.customIconKeepRatio = ratioCheckbox.checked;
 				}
 				updateStyles(); // Refresh styles
 			});
 
 			customIconContainer = customIconWrap.createDiv("custom-icon-grid");
-			
+
 			// Preview Image Element (hidden if not custom)
 			const previewRow = customIconWrap.createDiv({ cls: "magic-custom-icon-preview-row" });
 			customIconPreview = previewRow.createEl("img", { cls: "magic-folder-custom-icon" });
 			customIconPreview.style.display = "none"; // Hidden by default until selected
-			
+
 			// Logic to show preview if custom icon is already active
 			if (this.folder.customIconSourcePath || this.folder.customIconPath) {
-				 customIconPreview.style.display = "inline-block";
-				 const path = this.folder.customIconSourcePath || this.folder.customIconPath;
-				 this.plugin.loadIconIntoImg(path, customIconPreview);
-				 // Apply current styles
-				 customIconPreview.style.height = `${currentSize}px`;
-				 customIconPreview.style.width = this.folder.customIconKeepRatio ? "auto" : `${currentSize}px`;
-				 customIconPreview.style.transform = `translate(${currentX}px, ${currentY}px)`;
+				customIconPreview.style.display = "inline-block";
+				const path = this.folder.customIconSourcePath || this.folder.customIconPath;
+				this.plugin.loadIconIntoImg(path, customIconPreview);
+				// Apply current styles
+				customIconPreview.style.height = `${currentSize}px`;
+				customIconPreview.style.width = this.folder.customIconKeepRatio ? "auto" : `${currentSize}px`;
+				customIconPreview.style.transform = `translate(${currentX}px, ${currentY}px)`;
 			}
 
 			// --- ICON GRID ---
 			const allowed = new Set(["svg", "png", "jpg", "jpeg", "gif", "webp"]);
 			const iconFolderPath = this.plugin.settings.customIconFolder.trim();
-			
-			 if (this.plugin.isExternalPath(iconFolderPath)) {
+
+			if (this.plugin.isExternalPath(iconFolderPath)) {
 				try {
 					const entries = fs.readdirSync(iconFolderPath, { withFileTypes: true });
 					for (const entry of entries) {
@@ -3893,10 +4013,10 @@ class MagicFolderModal extends Modal {
 							void applyCustomIcon(filePath);
 						});
 					}
-				} catch (err) {}
-			 } else {
-				 const folder = this.plugin.app.vault.getAbstractFileByPath(iconFolderPath);
-				 if (folder instanceof TFolder) {
+				} catch (err) { }
+			} else {
+				const folder = this.plugin.app.vault.getAbstractFileByPath(iconFolderPath);
+				if (folder instanceof TFolder) {
 					const files = folder.children.filter((child) => child instanceof TFile && allowed.has(child.extension.toLowerCase()));
 					for (const file of files) {
 						const btn = customIconContainer.createEl("button", { cls: "custom-icon-btn" });
@@ -3915,8 +4035,8 @@ class MagicFolderModal extends Modal {
 							void applyCustomIcon(file.path);
 						});
 					}
-				 }
-			 }
+				}
+			}
 		}
 
 		// --- SORT BY ---
@@ -3934,12 +4054,12 @@ class MagicFolderModal extends Modal {
 		const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
 		const cancelBtn = buttonContainer.createEl("button", { text: t('modal_cancel') });
 		cancelBtn.addEventListener("click", () => this.close());
-		
+
 		const saveBtn = buttonContainer.createEl("button", {
 			text: this.isNew ? t('modal_create') : t('modal_save'),
 			cls: "mod-cta"
 		});
-		
+
 		saveBtn.addEventListener("click", async () => {
 			if (!this.folder.name.trim()) {
 				new Notice(this.plugin.t('notice_name_required'));
@@ -4011,8 +4131,8 @@ class DoMagicModal extends Modal {
 			}
 
 			if (cache.frontmatter?.tags) {
-				const fmTags = Array.isArray(cache.frontmatter.tags) 
-					? cache.frontmatter.tags 
+				const fmTags = Array.isArray(cache.frontmatter.tags)
+					? cache.frontmatter.tags
 					: [cache.frontmatter.tags];
 				for (const tag of fmTags) {
 					tagSet.add('#' + String(tag).replace(/^#/, ''));
@@ -4135,25 +4255,25 @@ class DoMagicModal extends Modal {
 			margin: 12px 0;
 			align-items: center;
 		`;
-		
+
 		logicContainer.createSpan({ text: t('do_magic_logic_label'), cls: 'setting-item-description' });
-		
+
 		const logicOptions: LogicOperator[] = ['OR', 'AND', 'NOT'];
 		const logicButtons: Map<LogicOperator, HTMLButtonElement> = new Map();
-		
+
 		for (const logic of logicOptions) {
 			const btn = logicContainer.createEl('button', { text: logic });
 			btn.addClass('logic-btn');
 			if (logic === this.currentLogic) {
 				btn.addClass('logic-btn-active');
 			}
-			
+
 			const colors: Record<LogicOperator, string> = {
 				'OR': '#2ecc71',
-				'AND': '#3498db', 
+				'AND': '#3498db',
 				'NOT': '#e74c3c'
 			};
-			
+
 			btn.style.cssText = `
 				padding: 4px 12px;
 				border-radius: 4px;
@@ -4164,7 +4284,7 @@ class DoMagicModal extends Modal {
 				cursor: pointer;
 				transition: all 0.15s ease;
 			`;
-			
+
 			btn.addEventListener('click', () => {
 				this.currentLogic = logic;
 				for (const [l, b] of logicButtons) {
@@ -4176,7 +4296,7 @@ class DoMagicModal extends Modal {
 					else b.removeClass('logic-btn-active');
 				}
 			});
-			
+
 			logicButtons.set(logic, btn);
 		}
 
@@ -4184,7 +4304,7 @@ class DoMagicModal extends Modal {
 		inputWrapper.style.position = 'relative';
 
 		const inputContainer = inputWrapper.createDiv('filter-input-container');
-		
+
 		this.filterInput = inputContainer.createEl('input', {
 			type: 'text',
 			placeholder: t('do_magic_input_placeholder')
@@ -4293,14 +4413,14 @@ class DoMagicModal extends Modal {
 			}
 		} else if (value.length > 0) {
 			const search = value.toLowerCase();
-			
+
 			for (const tag of this.allTags) {
 				if (tag.toLowerCase().includes(search)) {
 					suggestions.push({ text: tag, type: 'tag' });
 					if (suggestions.length >= 8) break;
 				}
 			}
-			
+
 			for (const link of this.allLinks) {
 				if (link.toLowerCase().includes(search)) {
 					suggestions.push({ text: `[[${link}]]`, type: 'link' });
@@ -4391,7 +4511,7 @@ class DoMagicModal extends Modal {
 		}
 
 		this.addFilter(filter);
-		
+
 		if (this.filterInput) {
 			this.filterInput.value = '';
 			this.filterInput.focus();
@@ -4403,7 +4523,7 @@ class DoMagicModal extends Modal {
 		if (!this.suggestionsContainer) return;
 
 		const items = this.suggestionsContainer.querySelectorAll('.magic-suggestion-item');
-		
+
 		if (e.key === 'ArrowDown') {
 			e.preventDefault();
 			this.selectedSuggestionIndex = Math.min(this.selectedSuggestionIndex + 1, items.length - 1);
@@ -4426,8 +4546,8 @@ class DoMagicModal extends Modal {
 
 	highlightSuggestion(items: NodeListOf<Element>) {
 		items.forEach((item, index) => {
-			(item as HTMLElement).style.background = index === this.selectedSuggestionIndex 
-				? 'var(--background-modifier-hover)' 
+			(item as HTMLElement).style.background = index === this.selectedSuggestionIndex
+				? 'var(--background-modifier-hover)'
 				: '';
 		});
 
@@ -4508,7 +4628,7 @@ class DoMagicModal extends Modal {
 		this.filtersContainer.empty();
 
 		if (this.folder.filters.length === 0) {
-			this.filtersContainer.createEl('p', { 
+			this.filtersContainer.createEl('p', {
 				text: 'No filters yet. Add tags or links above!',
 				cls: 'setting-item-description'
 			});
@@ -4569,7 +4689,7 @@ class DoMagicModal extends Modal {
 				const filterIndex = this.folder.filters.indexOf(filter);
 				const tagEl = tagsContainer.createDiv('filter-tag');
 				tagEl.style.borderColor = logicColors[logic];
-				
+
 				const iconEl = tagEl.createSpan();
 				let displayValue = filter.value;
 				switch (filter.type) {
@@ -4606,7 +4726,7 @@ class DoMagicModal extends Modal {
 		this.previewContainer.empty();
 
 		if (this.folder.filters.length === 0) {
-			this.previewContainer.createEl('p', { 
+			this.previewContainer.createEl('p', {
 				text: t('do_magic_preview_empty'),
 				cls: 'setting-item-description'
 			});
@@ -4616,7 +4736,7 @@ class DoMagicModal extends Modal {
 		const files = await (this.plugin as any).getMatchingFiles(this.folder);
 
 		if (files.length === 0) {
-			this.previewContainer.createEl('p', { 
+			this.previewContainer.createEl('p', {
 				text: t('do_magic_preview_none'),
 				cls: 'setting-item-description'
 			});
