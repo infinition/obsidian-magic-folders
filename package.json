@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-magic-folders",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"description": "Create virtual smart folders that dynamically display files based on tags, links, or custom filters.",
 	"main": "main.js",
 	"scripts": {
