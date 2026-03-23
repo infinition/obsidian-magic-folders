@@ -1,10 +1,10 @@
 {
 	"id": "obsidian-magic-folders",
 	"name": "Magic Folders",
-	"version": "1.0.0",
+	"version": "1.2.1",
 	"minAppVersion": "1.0.0",
 	"description": "Create virtual smart folders that dynamically display files based on tags, links, or custom filters.",
-	"author": "Infinition",
-	"authorUrl": "https://github.com/infinition",
+	"author": "Fabien Polly (Infinition)",
+	"authorUrl": "https://github.com/infinition/obsidian-magic-folders",
 	"isDesktopOnly": false
 }
