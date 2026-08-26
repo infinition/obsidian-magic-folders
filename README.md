@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/obsidian-magic-folders.png" alt="Magic Folders for Obsidian icon" width="128">
+</p>
+
 # Magic Folders for Obsidian
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white) [![Release](https://img.shields.io/github/v/release/infinition/obsidian-magic-folders?style=flat)](https://github.com/infinition/obsidian-magic-folders/releases) [![Obsidian Plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?style=flat&logo=obsidian&logoColor=white)](https://obsidian.md/plugins?id=magic-folders) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/infinition)
